@@ -27,9 +27,15 @@ SOURCES += main.cpp\
         MainWindow.cpp \
     Constants.cpp \
     Image.cpp \
-    KImageView.cpp
+    KImageView.cpp \
+    HistogramDialog.cpp \
+    HistogramView.cpp \
+    Histogram.cpp
 
 HEADERS  += MainWindow.h \
     Constants.h \
     Image.h \
-    KImageView.h
+    KImageView.h \
+    HistogramDialog.h \
+    HistogramView.h \
+    Histogram.h

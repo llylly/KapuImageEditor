@@ -97,10 +97,46 @@ void Image::printImg() {
     delete[] arr;
 }
 
+void Image::calcHistogram(bool recalc) {
+    if (recalc == true) {
+        if (histogramAvailable) {
+            histogramAvailable = false;
+            delete histogram;
+        }
+    }
+    if (this->histogramAvailable == false) {
+        if (height * width > 0) {
+            histogram = new Histogram();
+            for (int i=0; i<height*width; ++i) {
+                histogram->arrR[R[i]]+=1.0f;
+                histogram->arrG[G[i]]+=1.0f;
+                histogram->arrB[B[i]]+=1.0f;
+            }
+            histogram->sumArrR[0] = histogram->arrR[0];
+            histogram->sumArrG[0] = histogram->arrG[0];
+            histogram->sumArrB[0] = histogram->arrB[0];
+            for (int i=0; i<Histogram::maxV; ++i) {
+                histogram->sumArrR[i+1] = histogram->sumArrR[i] + histogram->arrR[i+1];
+                histogram->sumArrG[i+1] = histogram->sumArrG[i] + histogram->arrG[i+1];
+                histogram->sumArrB[i+1] = histogram->sumArrB[i] + histogram->arrB[i+1];
+            }
+            histogram->divide(Histogram::R, height*width);
+            histogram->divide(Histogram::G, height*width);
+            histogram->divide(Histogram::B, height*width);
+            histogram->divide(Histogram::sumR, height*width);
+            histogram->divide(Histogram::sumG, height*width);
+            histogram->divide(Histogram::sumB, height*width);
+            this->histogramAvailable = true;
+        }
+    }
+}
+
 Image::Image()
 {
     height = width = 0;
     R = G = B = NULL;
+    histogram = NULL;
+    histogramAvailable = false;
 }
 
 Image::~Image() {

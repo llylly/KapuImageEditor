@@ -2,6 +2,8 @@
 #define CONSTANTS_H
 
 #include <string>
+#include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -35,6 +37,16 @@ public:
     static string SAVE_IMAGE_DIALOG;
     static string SAVE_IMAGE_FILTER;
     static string SAVE_IMAGE_INFO;
+    static string DEFAULT_STATUS_BAR;
+    static string EMPTY_IMAGE_STATUS_BAR;
+    static string IMAGE_STATUS_BAR(int h, int w);
+    static string HISTOGRAM_DIALOG;
+    static string RED;
+    static string GREEN;
+    static string BLUE;
+    static string OK;
+    static string ERROR;
+    static string HISTOGRAM_ERROR;
 
     Constants();
 };

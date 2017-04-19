@@ -6,6 +6,7 @@
 #include <QImage>
 #include <QRgb>
 #include <QPixmap>
+#include "Histogram.h"
 
 using namespace std;
 
@@ -50,11 +51,16 @@ public:
 
     void printImg();
 
+    void calcHistogram(bool recalc = false);
+
     Image();
     ~Image();
 
     int height, width;
     int *R, *G, *B;
+
+    bool histogramAvailable;
+    Histogram *histogram;
 
 private:
     static ImageEntry *head, *tail;

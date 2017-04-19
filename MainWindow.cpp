@@ -89,8 +89,15 @@ MainWindow::MainWindow(QWidget *parent)
         this->mainLayout->addLayout(this->buttonLayout);
     this->setCentralWidget(this->centralWidget);
 
+    this->histogramDialog = new HistogramDialog(this);
+
+    this->statusBar = new QStatusBar(this);
+    this->setStatusBar(this->statusBar);
+    this->statusBar->showMessage(Constants::DEFAULT_STATUS_BAR.c_str());
+
     connect(openImageButton, SIGNAL(clicked(bool)), this, SLOT(loadImage()));
     connect(saveImageButton, SIGNAL(clicked(bool)), this, SLOT(saveImage()));
+    connect(showHistogramButton, SIGNAL(clicked(bool)), this, SLOT(showHistogram()));
 }
 
 void MainWindow::loadImage() {
@@ -99,13 +106,13 @@ void MainWindow::loadImage() {
         QImage *qimg = new QImage();
         if (qimg->load(fileName)) {
             Image::addImage(Image::fromQImage(qimg));
-            graphicsView->loadImage();
+            this->showImage();
         }
         delete qimg;
     }
 }
 
-bool MainWindow::loadImagePrecheck() {
+bool MainWindow::editImagePrecheck() {
     if (Image::getCurEntry() == NULL) {
         QMessageBox::information(this, QString::fromStdString(Constants::SAVE_IMAGE_CAPTION), QString::fromStdString(Constants::SAVE_IMAGE_INFO), QMessageBox::Ok);
         return false;
@@ -113,12 +120,32 @@ bool MainWindow::loadImagePrecheck() {
     return true;
 }
 
+void MainWindow::showImage() {
+    graphicsView->loadImage();
+    if (Image::getCurEntry() == NULL)
+        this->statusBar->showMessage(Constants::EMPTY_IMAGE_STATUS_BAR.c_str());
+    else
+        this->statusBar->showMessage(Constants::IMAGE_STATUS_BAR(Image::getCurImage()->height, Image::getCurImage()->width).c_str());
+}
+
 void MainWindow::saveImage() {
-    if (!this->loadImagePrecheck()) return;
+    if (!this->editImagePrecheck()) return;
     QString fileName = QFileDialog::getSaveFileName(this, QString::fromStdString(Constants::SAVE_IMAGE_DIALOG), "", QString::fromStdString(Constants::SAVE_IMAGE_FILTER));
     if (!fileName.isEmpty()) {
         Image::getCurImage()->save(fileName.toStdString());
     }
+}
+
+void MainWindow::showHistogram() {
+    if (!this->editImagePrecheck()) return;
+    Image::getCurImage()->calcHistogram();
+    if (!Image::getCurImage()->histogramAvailable) {
+        QMessageBox::information(this, QString::fromStdString(Constants::ERROR), QString::fromStdString(Constants::HISTOGRAM_DIALOG), QMessageBox::Ok);
+        return;
+    }
+    histogramDialog->setHistogram(Image::getCurImage()->histogram);
+    histogramDialog->reDraw();
+    histogramDialog->show();
 }
 
 MainWindow::~MainWindow()

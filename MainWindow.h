@@ -12,11 +12,13 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QGridLayout>
+#include <QtWidgets/QStatusBar>
 #include <QMessageBox>
 #include <QFileDialog>
 #include "Constants.h"
 #include "Image.h"
 #include "KImageView.h"
+#include "HistogramDialog.h"
 
 class MainWindow : public QMainWindow
 {
@@ -63,11 +65,15 @@ private:
     QPushButton *aboutButton;
     QVBoxLayout *aboutLayout;
 
-    bool loadImagePrecheck();
+    HistogramDialog *histogramDialog;
+
+    bool editImagePrecheck();
+    void showImage();
 
 private slots:
     void loadImage();
     void saveImage();
+    void showHistogram();
 
 public:
 

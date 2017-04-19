@@ -31,6 +31,25 @@ string Constants::SAVE_IMAGE_DIALOG = "Save image to";
 string Constants::SAVE_IMAGE_FILTER = "BMP Images (*.bmp);;JPG Images (*.jpg);;JPEG Images (*.jpeg);;PNG Images (*.png)";
 string Constants::SAVE_IMAGE_INFO = "Please load an image first.";
 
+string Constants::DEFAULT_STATUS_BAR = "Ready";
+string Constants::EMPTY_IMAGE_STATUS_BAR = "Please open an image";
+string Constants::IMAGE_STATUS_BAR(int h, int w) {
+    string s = "";
+    ostringstream sin(s);
+    sin << "Height: " << h << " | " << "Width: " << w;
+    sin.flush();
+    return sin.str();
+}
+
+string Constants::HISTOGRAM_DIALOG = "Histogram";
+string Constants::RED = "Red";
+string Constants::GREEN = "Green";
+string Constants::BLUE = "Blue";
+string Constants::OK = "Ok";
+
+string Constants::ERROR = "Error";
+string Constants::HISTOGRAM_ERROR = "Sorry! Histogram calculation error.";
+
 Constants::Constants()
 {
 
