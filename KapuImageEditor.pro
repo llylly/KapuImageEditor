@@ -25,7 +25,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp\
         MainWindow.cpp \
-    Constants.cpp
+    Constants.cpp \
+    Image.cpp \
+    KImageView.cpp
 
 HEADERS  += MainWindow.h \
-    Constants.h
+    Constants.h \
+    Image.h \
+    KImageView.h
