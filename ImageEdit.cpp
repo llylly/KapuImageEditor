@@ -419,6 +419,54 @@ PSNRData ImageEdit::calcPSNR(Image *a, Image *b) {
     return ans;
 }
 
+Image* ImageEdit::uniformBlur(Image *img, int radius) {
+    if ((img == NULL) || (img->height * img->width <= 0)) return NULL;
+    if ((radius <= 0) || (radius > Constants::BLUR_LIMIT)) return NULL;
+
+    Image *ans = new Image();
+    int h, w;
+    ans->height = h = img->height;
+    ans->width = w = img->width;
+    ans->R = new int[height * width];
+    ans->G = new int[height * width];
+    ans->B = new int[height * width];
+
+
+    return ans;
+}
+
+Image* ImageEdit::gaussianBlur(Image *img, int radius) {
+    if ((img == NULL) || (img->height * img->width <= 0)) return NULL;
+    if ((radius <= 0) || (radius > Constants::BLUR_LIMIT)) return NULL;
+
+    Image *ans = new Image();
+    int h, w;
+    ans->height = h = img->height;
+    ans->width = w = img->width;
+    ans->R = new int[height * width];
+    ans->G = new int[height * width];
+    ans->B = new int[height * width];
+
+
+    return ans;
+}
+
+Image* ImageEdit::mosaicBlur(Image *img, int radius) {
+    if ((img == NULL) || (img->height * img->width <= 0)) return NULL;
+    if ((radius <= 0) || (radius > Constants::BLUR_LIMIT)) return NULL;
+
+    Image *ans = new Image();
+    int h, w;
+    ans->height = h = img->height;
+    ans->width = w = img->width;
+    ans->R = new int[height * width];
+    ans->G = new int[height * width];
+    ans->B = new int[height * width];
+
+
+    return ans;
+}
+
 DoubleColor ImageEdit::getApproxV(Image *img, double r, double c, int refR, int refC) {
     DoubleColor ans(0.0f, 0.0f, 0.0f);
     if ((img == NULL) || (img->height * img->width <= 0)) return ans;

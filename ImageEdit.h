@@ -40,6 +40,9 @@ public:
     static Image *bilinear(Image *img, int width, int height);
     static Image *bicubic(Image *img, int width, int height);
     static PSNRData calcPSNR(Image *a, Image *b);
+    static Image* uniformBlur(Image *img, int radius);
+    static Image* gaussianBlur(Image *img, int radius);
+    static Image* mosaicBlur(Image *img, int radius);
 
 private:
     static DoubleColor getApproxV(Image *img, double r, double c, int refR, int refC);

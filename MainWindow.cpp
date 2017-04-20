@@ -107,6 +107,7 @@ MainWindow::MainWindow(QWidget *parent)
     this->pSNRDialog = new PSNRDialog(this);
 
     this->zoomDialog = new ZoomDialog(this);
+    this->blurDialog = new BlurDialog(this);
 
     this->statusBar = new QStatusBar(this);
     this->setStatusBar(this->statusBar);
@@ -255,7 +256,20 @@ void MainWindow::histogramMatch() {
 }
 
 void MainWindow::blurShow() {
-
+    if (!this->editImagePrecheck()) return;
+    blurDialog->type = BlurDialog::NO_TYPE;
+    blurDialog->exec();
+    if (blurDialog->type != BlurDialog::NO_TYPE) {
+        Image *newI = NULL;
+        if (blurDialog->type == BlurDialog::UNIFORM)
+            newI = ImageEdit::uniformBlur(Image::getCurImage(), blurDialog->radius);
+        if (blurDialog->type == BlurDialog::GAUSSIAN)
+            newI = ImageEdit::gaussianBlur(Image::getCurImage(), blurDialog->radius);
+        if (blurDialog->type == BlurDialog::MOSAIC)
+            newI = ImageEdit::mosaicBlur(Image::getCurImage(), blurDialog->radius);
+        Image::addImage(newI);
+        this->showImage();
+    }
 }
 
 void MainWindow::resamplingShow() {

@@ -120,6 +120,16 @@ string Constants::PSNR_ILLEGAL_CAPTION(int ow, int oh, int rw, int rh) {
 int Constants::PSNR_DIALOG_H = 300;
 int Constants::PSNR_DIALOG_W = 300;
 
+string Constants::BLUR_UNIFORM = "Uniform Blur";
+string Constants::BLUR_GAUSSIAN = "Gaussian Blur";
+string Constants::BLUR_MOSAIC = "Mosaic";
+string Constants::BLUR_RADIUS = "Radius";
+int Constants::BLUR_DIALOG_W = 350;
+int Constants::BLUR_DIALOG_H = 150;
+string Constants::BLUR_ILLEGAL_VALUE = "Illegal Value. The radius should be a positive integer and smaller or equal than 50.";
+string Constants::BLUR_NO_CHOOSE = "Please choose one blurring type.";
+int Constants::BLUR_LIMIT = 50;
+
 Constants::Constants()
 {
 

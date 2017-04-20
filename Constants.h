@@ -90,6 +90,15 @@ public:
     static string PSNR_ILLEGAL_CAPTION(int ow, int oh, int rw, int rh);
     static int PSNR_DIALOG_W;
     static int PSNR_DIALOG_H;
+    static string BLUR_UNIFORM;
+    static string BLUR_GAUSSIAN;
+    static string BLUR_MOSAIC;
+    static string BLUR_RADIUS;
+    static int BLUR_DIALOG_W;
+    static int BLUR_DIALOG_H;
+    static string BLUR_ILLEGAL_VALUE;
+    static string BLUR_NO_CHOOSE;
+    static int BLUR_LIMIT;
 
     Constants();
 };

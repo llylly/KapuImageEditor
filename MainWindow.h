@@ -25,6 +25,7 @@
 #include "ContrastDialog.h"
 #include "ZoomDialog.h"
 #include "PSNRDialog.h"
+#include "BlurDialog.h"
 
 class MainWindow : public QMainWindow
 {
@@ -81,6 +82,7 @@ private:
     PSNRDialog *pSNRDialog;
 
     ZoomDialog *zoomDialog;
+    BlurDialog *blurDialog;
 
     bool editImagePrecheck();
     void showImage();
