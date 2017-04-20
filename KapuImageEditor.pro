@@ -34,7 +34,8 @@ SOURCES += main.cpp\
     ImageEdit.cpp \
     BrightDialog.cpp \
     ContrastDialog.cpp \
-    ZoomDialog.cpp
+    ZoomDialog.cpp \
+    PSNRDialog.cpp
 
 HEADERS  += MainWindow.h \
     Constants.h \
@@ -46,4 +47,5 @@ HEADERS  += MainWindow.h \
     ImageEdit.h \
     BrightDialog.h \
     ContrastDialog.h \
-    ZoomDialog.h
+    ZoomDialog.h \
+    PSNRDialog.h

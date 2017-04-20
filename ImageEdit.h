@@ -3,7 +3,27 @@
 
 #include <cstdlib>
 #include <ctime>
+#include <cmath>
 #include "Image.h"
+#include "Constants.h"
+
+struct DoubleColor {
+    double R, G, B;
+    DoubleColor() { }
+    DoubleColor(double r, double g, double b): R(r), G(g), B(b) { }
+};
+
+struct PSNRData {
+    bool avail;
+    int width, height;
+    double RMSE;
+    double GMSE;
+    double BMSE;
+    double RPSNR;
+    double GPSNR;
+    double BPSNR;
+    double PSNR;
+};
 
 class ImageEdit
 {
@@ -16,6 +36,13 @@ public:
     static Image *gammaAdjust(Image *img, double gamma);
     static Image *histogramEqualization(Image *img);
     static Image *histogramStylize(Image *img, Image *refer);
+    static Image *nearestNeighbor(Image *img, int width, int height);
+    static Image *bilinear(Image *img, int width, int height);
+    static Image *bicubic(Image *img, int width, int height);
+    static PSNRData calcPSNR(Image *a, Image *b);
+
+private:
+    static DoubleColor getApproxV(Image *img, double r, double c, int refR, int refC);
 };
 
 #endif // IMAGEEDIT_H

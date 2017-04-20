@@ -222,3 +222,269 @@ Image *ImageEdit::histogramStylize(Image *img, Image *refer) {
 
     return ans;
 }
+
+Image *ImageEdit::nearestNeighbor(Image *img, int width, int height) {
+    if (width < 0 || width > Constants::ZOOM_LIMIT) return NULL;
+    if (height < 0 || height > Constants::ZOOM_LIMIT) return NULL;
+    if ((img == NULL) || (img->height * img->width <= 0)) return NULL;
+
+    double rratio = (double)(img->height) / (double)(height + 1);
+    double cratio = (double)(img->width) / (double)(width + 1);
+
+    Image *ans = new Image();
+    ans->height = height;
+    ans->width = width;
+    ans->R = new int[height * width];
+    ans->G = new int[height * width];
+    ans->B = new int[height * width];
+
+    int rf, cf;
+    for (int i=0; i<height; ++i)
+        for (int j=0; j<width; ++j) {
+            rf = (int)(rratio * (i+1));
+            cf = (int)(cratio * (j+1));
+            ans->R[I(i,j,width)] = img->R[I(rf,cf,img->width)];
+            ans->G[I(i,j,width)] = img->G[I(rf,cf,img->width)];
+            ans->B[I(i,j,width)] = img->B[I(rf,cf,img->width)];
+        }
+
+    return ans;
+}
+
+Image *ImageEdit::bilinear(Image *img, int width, int height) {
+    if (width < 0 || width > Constants::ZOOM_LIMIT) return NULL;
+    if (height < 0 || height > Constants::ZOOM_LIMIT) return NULL;
+    if ((img == NULL) || (img->height * img->width <= 0)) return NULL;
+
+    double rratio, cratio;
+
+    if (height == 1) rratio = 0.0f; else
+        rratio = (double)(img->height - 1) / (double)(height - 1);
+    if (width == 1) cratio = 0.0f; else
+        cratio = (double)(img->width - 1) / (double)(width - 1);
+
+    Image *ans = new Image();
+    ans->height = height;
+    ans->width = width;
+    ans->R = new int[height * width];
+    ans->G = new int[height * width];
+    ans->B = new int[height * width];
+
+    double rf, cf;
+    int ror, roc;
+    int flr, flc;
+    int cer, cec;
+    for (int i=0; i<height; ++i)
+        for (int j=0; j<width; ++j) {
+            rf = rratio * i;
+            cf = cratio * j;
+            ror = int(rf + 0.5f), roc = int(cf + 0.5f);
+            if (abs(rf-ror) < EPS) rf = ror-EPS;
+            if (abs(cf-roc) < EPS) cf = roc-EPS;
+            flr = int(rf), flc = int(cf);
+            cer = flr + 1, cec = flc + 1;
+            if (cer >= img->height) cer = img->height - 1;
+            if (cec >= img->width) cec = img->width - 1;
+            {
+                double deltaR = rf-flr, deltaC = cf - flc;
+                ans->R[I(i,j,width)] =
+                        (int)((1.0 - deltaR) * (1.0 - deltaC) * img->R[I(flr, flc, img->width)] +
+                              (1.0 - deltaR) * deltaC * img->R[I(flr, cec, img->width)] +
+                              deltaR * (1.0 - deltaC) * img->R[I(cer, flc, img->width)] +
+                              deltaR * deltaC * img->R[I(cer, cec, img->width)] +
+                              0.5f);
+                ans->G[I(i,j,width)] =
+                        (int)((1.0 - deltaR) * (1.0 - deltaC) * img->G[I(flr, flc, img->width)] +
+                              (1.0 - deltaR) * deltaC * img->G[I(flr, cec, img->width)] +
+                              deltaR * (1.0 - deltaC) * img->G[I(cer, flc, img->width)] +
+                              deltaR * deltaC * img->G[I(cer, cec, img->width)] +
+                              0.5f);
+                ans->B[I(i,j,width)] =
+                        (int)((1.0 - deltaR) * (1.0 - deltaC) * img->B[I(flr, flc, img->width)] +
+                              (1.0 - deltaR) * deltaC * img->B[I(flr, cec, img->width)] +
+                              deltaR * (1.0 - deltaC) * img->B[I(cer, flc, img->width)] +
+                              deltaR * deltaC * img->B[I(cer, cec, img->width)] +
+                              0.5f);
+                if (ans->R[I(i,j,width)] > 255) ans->R[I(i,j,width)] = 255;
+                if (ans->G[I(i,j,width)] > 255) ans->G[I(i,j,width)] = 255;
+                if (ans->B[I(i,j,width)] > 255) ans->B[I(i,j,width)] = 255;
+            }
+        }
+
+    return ans;
+}
+
+Image *ImageEdit::bicubic(Image *img, int width, int height) {
+    if (width < 0 || width > Constants::ZOOM_LIMIT) return NULL;
+    if (height < 0 || height > Constants::ZOOM_LIMIT) return NULL;
+    if ((img == NULL) || (img->height * img->width <= 0)) return NULL;
+
+    double rratio, cratio;
+
+    if (height == 1) rratio = 0.0f; else
+        rratio = (double)(img->height - 1) / (double)(height - 1);
+    if (width == 1) cratio = 0.0f; else
+        cratio = (double)(img->width - 1) / (double)(width - 1);
+
+    Image *ans = new Image();
+    ans->height = height;
+    ans->width = width;
+    ans->R = new int[height * width];
+    ans->G = new int[height * width];
+    ans->B = new int[height * width];
+
+    double rf, cf;
+    int ror, roc;
+    int flr, flc;
+    int cer, cec;
+    DoubleColor ap0, ap1, ap2, ap3;
+    for (int i=0; i<height; ++i)
+        for (int j=0; j<width; ++j) {
+            rf = rratio * i;
+            cf = cratio * j;
+            ror = int(rf + 0.5f), roc = int(cf + 0.5f);
+            if (abs(rf-ror) < EPS) rf = ror-EPS;
+            if (abs(cf-roc) < EPS) cf = roc-EPS;
+            flr = int(rf), flc = int(cf);
+            cer = flr + 1, cec = flc + 1;
+            if (cer >= img->height) cer = img->height - 1;
+            if (cec >= img->width) cec = img->width - 1;
+            {
+                double deltaR = rf-flr, deltaC = cf - flc;
+                ap0 = getApproxV(img, rf, cf, flr, flc),
+                ap1 = getApproxV(img, rf, cf, flr, cec),
+                ap2 = getApproxV(img, rf, cf, cer, flc),
+                ap3 = getApproxV(img, rf, cf, cer, cec);
+                ans->R[I(i,j,width)] =
+                        (int)((1.0 - deltaR) * (1.0 - deltaC) * ap0.R +
+                              (1.0 - deltaR) * deltaC * ap1.R +
+                              deltaR * (1.0 - deltaC) * ap2.R +
+                              deltaR * deltaC * ap3.R +
+                              0.5f);
+                ans->G[I(i,j,width)] =
+                        (int)((1.0 - deltaR) * (1.0 - deltaC) * ap0.G +
+                              (1.0 - deltaR) * deltaC * ap1.G +
+                              deltaR * (1.0 - deltaC) * ap2.G +
+                              deltaR * deltaC * ap3.G +
+                              0.5f);
+                ans->B[I(i,j,width)] =
+                        (int)((1.0 - deltaR) * (1.0 - deltaC) * ap0.B +
+                              (1.0 - deltaR) * deltaC * ap1.B +
+                              deltaR * (1.0 - deltaC) * ap2.B +
+                              deltaR * deltaC * ap3.B +
+                              0.5f);
+                if (ans->R[I(i,j,width)] > 255) ans->R[I(i,j,width)] = 255;
+                if (ans->G[I(i,j,width)] > 255) ans->G[I(i,j,width)] = 255;
+                if (ans->B[I(i,j,width)] > 255) ans->B[I(i,j,width)] = 255;
+                if (ans->R[I(i,j,width)] < 0) ans->R[I(i,j,width)] = 0;
+                if (ans->G[I(i,j,width)] < 0) ans->G[I(i,j,width)] = 0;
+                if (ans->B[I(i,j,width)] < 0) ans->B[I(i,j,width)] = 0;
+            }
+        }
+
+    return ans;
+}
+
+PSNRData ImageEdit::calcPSNR(Image *a, Image *b) {
+    PSNRData ans;
+    ans.avail = false;
+    if ((a == NULL) || (b == NULL) || (a->height * a->width <= 0) || (b->height * b->width <= 0))
+        return ans;
+    if ((a->height != b->height) || (a->width != b->width))
+        return ans;
+    ans.RMSE = ans.GMSE = ans.BMSE = 0.0f;
+    for (int i=0; i < a->height*a->width; ++i) {
+        ans.RMSE += (a->R[i] - b->R[i]) * (a->R[i] - b->R[i]);
+        ans.GMSE += (a->G[i] - b->G[i]) * (a->G[i] - b->G[i]);
+        ans.BMSE += (a->B[i] - b->B[i]) * (a->B[i] - b->B[i]);
+    }
+    ans.RMSE = ans.RMSE / (double)(a->height * a->width);
+    ans.GMSE = ans.GMSE / (double)(a->height * a->width);
+    ans.BMSE = ans.BMSE / (double)(a->height * a->width);
+
+    if (abs(ans.RMSE) < EPS)
+        ans.RPSNR = INFINITY;
+    else
+        ans.RPSNR = 20.0f * (log(255.0f / sqrt(ans.RMSE)) / log(10.0f));
+    if (abs(ans.GMSE) < EPS)
+        ans.GPSNR = INFINITY;
+    else
+        ans.GPSNR = 20.0f * (log(255.0f / sqrt(ans.GMSE)) / log(10.0f));
+    if (abs(ans.BMSE) < EPS)
+        ans.BPSNR = INFINITY;
+    else
+        ans.BPSNR = 20.0f * (log(255.0f / sqrt(ans.BMSE)) / log(10.0f));
+    ans.PSNR = (ans.RPSNR + ans.GPSNR + ans.BPSNR) / 3.0f;
+    ans.avail = true;
+    return ans;
+}
+
+DoubleColor ImageEdit::getApproxV(Image *img, double r, double c, int refR, int refC) {
+    DoubleColor ans(0.0f, 0.0f, 0.0f);
+    if ((img == NULL) || (img->height * img->width <= 0)) return ans;
+    if ((refR < 0) || (refR >= img->height)) return ans;
+    if ((refC < 0) || (refC >= img->width)) return ans;
+    DoubleColor rVec(0.0f, 0.0f, 0.0f), cVec(0.0f, 0.0f, 0.0f);
+    if ((refR > 0) && (refR < img->height - 1)) {
+        double d;
+        d = (img->R[I(refR + 1, refC, img->width)] - img->R[I(refR - 1, refC, img->width)]);
+        rVec.R = d / 2.0f;
+        d = (img->G[I(refR + 1, refC, img->width)] - img->G[I(refR - 1, refC, img->width)]);
+        rVec.G = d / 2.0f;
+        d = (img->B[I(refR + 1, refC, img->width)] - img->B[I(refR - 1, refC, img->width)]);
+        rVec.B = d / 2.0f;
+    } else
+    if ((refR == 0) && (img->height > 0)) {
+        double d;
+        d = img->R[I(refR + 1, refC, img->width)] - img->R[I(refR, refC, img->width)];
+        rVec.R = d;
+        d = img->G[I(refR + 1, refC, img->width)] - img->G[I(refR, refC, img->width)];
+        rVec.G = d;
+        d = img->B[I(refR + 1, refC, img->width)] - img->B[I(refR, refC, img->width)];
+        rVec.B = d;
+    } else
+    if ((refR == img->height - 1) && (img->height > 0)) {
+        double d;
+        d = img->R[I(refR, refC, img->width)] - img->R[I(refR - 1, refC, img->width)];
+        rVec.R = d;
+        d = img->G[I(refR, refC, img->width)] - img->G[I(refR - 1, refC, img->width)];
+        rVec.G = d;
+        d = img->B[I(refR, refC, img->width)] - img->B[I(refR - 1, refC, img->width)];
+        rVec.B = d;
+    }
+
+    if ((refC > 0) && (refC < img->width - 1)) {
+        double d;
+        d = (img->R[I(refR, refC + 1, img->width)] - img->R[I(refR, refC - 1, img->width)]);
+        cVec.R = d / 2.0f;
+        d = (img->G[I(refR, refC + 1, img->width)] - img->G[I(refR, refC - 1, img->width)]);
+        cVec.G = d / 2.0f;
+        d = (img->B[I(refR, refC + 1, img->width)] - img->B[I(refR, refC - 1, img->width)]);
+        cVec.B = d / 2.0f;
+    } else
+    if ((refC == 0) && (img->width > 0)) {
+        double d;
+        d = img->R[I(refR, refC + 1, img->width)] - img->R[I(refR, refC, img->width)];
+        cVec.R = d;
+        d = img->G[I(refR, refC + 1, img->width)] - img->G[I(refR, refC, img->width)];
+        cVec.G = d;
+        d = img->B[I(refR, refC + 1, img->width)] - img->B[I(refR, refC, img->width)];
+        cVec.B = d;
+    } else
+    if ((refC == img->width - 1) && (img->width > 0)) {
+        double d;
+        d = img->R[I(refR, refC, img->width)] - img->R[I(refR, refC - 1, img->width)];
+        cVec.R = d;
+        d = img->G[I(refR, refC, img->width)] - img->G[I(refR, refC - 1, img->width)];
+        cVec.G = d;
+        d = img->B[I(refR, refC, img->width)] - img->B[I(refR, refC - 1, img->width)];
+        cVec.B = d;
+    }
+    ans.R = img->R[I(refR, refC, img->width)];
+    ans.G = img->G[I(refR, refC, img->width)];
+    ans.B = img->B[I(refR, refC, img->width)];
+    ans.R += (r - refR) * rVec.R + (c - refC) * cVec.R;
+    ans.G += (r - refR) * rVec.G + (c - refC) * cVec.G;
+    ans.B += (r - refR) * rVec.B + (c - refC) * cVec.B;
+    return ans;
+}

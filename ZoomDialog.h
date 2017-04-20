@@ -13,7 +13,9 @@
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QSpacerItem>
+#include <QtWidgets/QButtonGroup>
 #include <QShowEvent>
+#include <QMessageBox>
 #include "Constants.h"
 #include "Image.h"
 
@@ -21,13 +23,23 @@ class ZoomDialog: public QDialog
 {
     Q_OBJECT
 public:
+    const static int NEAREST_NEIGHBOR;
+    const static int BILINEAR;
+    const static int BICUBIC;
+    const static int NO_TYPE;
+
+    int type;
+    int newWidth, newHeight;
+
     ZoomDialog();
     ZoomDialog(QWidget *parent);
 
     int oldWidth, oldHeight;
 
 private:
+    QButtonGroup *typeGroup, *byGroup;
     QVBoxLayout *mainLayout;
+    QLabel *cautionLabel;
     QHBoxLayout *upperLayout;
     QRadioButton *type1Radio, *type2Radio, *type3Radio;
     QGridLayout *middleLayout;

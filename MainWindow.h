@@ -24,6 +24,7 @@
 #include "ImageEdit.h"
 #include "ContrastDialog.h"
 #include "ZoomDialog.h"
+#include "PSNRDialog.h"
 
 class MainWindow : public QMainWindow
 {
@@ -77,6 +78,7 @@ private:
     HistogramDialog *histogramDialog;
     BrightDialog *brightDialog;
     ContrastDialog *contrastDialog;
+    PSNRDialog *pSNRDialog;
 
     ZoomDialog *zoomDialog;
 

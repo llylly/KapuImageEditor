@@ -4,6 +4,7 @@ ImageEntry *Image::head = NULL;
 ImageEntry *Image::tail = NULL;
 
 void Image::addImage(Image* img) {
+    if ((img == NULL) || (img->height * img->width <= 0)) return;
     if (Image::head == NULL) {
         Image::head = Image::tail = new ImageEntry();
         Image::tail->value = img;

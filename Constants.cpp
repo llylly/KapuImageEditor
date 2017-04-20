@@ -97,8 +97,28 @@ string Constants::ZOOM_SIZE = "Size";
 string Constants::ZOOM_WIDTH = "Width";
 string Constants::ZOOM_HEIGHT = "Height";
 string Constants::ZOOM_UNKNOWN = "Unknown";
+string Constants::ZOOM_NO_CHOOSE = "Please choose one zoom policy.";
 int Constants::ZOOM_DIALOG_WIDTH = 600;
 int Constants::ZOOM_DIALOG_HEIGHT = 300;
+string Constants::ZOOM_CAUTION = \
+        "Width and height should be in interval 1 ~ 5000 by pixel.";
+int Constants::ZOOM_LIMIT = 5000;
+
+string Constants::PSNR_DIALOG = "Choose Another Image for PSNR Compare";
+string Constants::PSNR = "PSNR";
+
+string Constants::PSNR_ILLEGAL_CAPTION(int ow, int oh, int rw, int rh) {
+    string s = "";
+    ostringstream sin(s);
+    sin << "Size not match." << endl;
+    sin << "Original Image | Height: " << oh << " | " << "Width: " << ow << endl;
+    sin << "Refering Image | Height: " << rh << " | " << "Width: " << rw << endl;
+    sin.flush();
+    return sin.str();
+}
+
+int Constants::PSNR_DIALOG_H = 300;
+int Constants::PSNR_DIALOG_W = 300;
 
 Constants::Constants()
 {

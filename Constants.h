@@ -80,8 +80,16 @@ public:
     static string ZOOM_WIDTH;
     static string ZOOM_HEIGHT;
     static string ZOOM_UNKNOWN;
+    static string ZOOM_NO_CHOOSE;
     static int ZOOM_DIALOG_WIDTH;
     static int ZOOM_DIALOG_HEIGHT;
+    static string ZOOM_CAUTION;
+    static int ZOOM_LIMIT;
+    static string PSNR_DIALOG;
+    static string PSNR;
+    static string PSNR_ILLEGAL_CAPTION(int ow, int oh, int rw, int rh);
+    static int PSNR_DIALOG_W;
+    static int PSNR_DIALOG_H;
 
     Constants();
 };

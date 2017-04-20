@@ -104,6 +104,7 @@ MainWindow::MainWindow(QWidget *parent)
     this->histogramDialog = new HistogramDialog(this);
     this->brightDialog = new BrightDialog(this);
     this->contrastDialog = new ContrastDialog(this);
+    this->pSNRDialog = new PSNRDialog(this);
 
     this->zoomDialog = new ZoomDialog(this);
 
@@ -258,11 +259,47 @@ void MainWindow::blurShow() {
 }
 
 void MainWindow::resamplingShow() {
+    if (!this->editImagePrecheck()) return;
+    zoomDialog->type = ZoomDialog::NO_TYPE;
     zoomDialog->exec();
+    if (zoomDialog->type == ZoomDialog::NEAREST_NEIGHBOR) {
+        Image *newI = ImageEdit::nearestNeighbor(Image::getCurImage(), zoomDialog->newWidth, zoomDialog->newHeight);
+        Image::addImage(newI);
+        this->showImage();
+    }
+    if (zoomDialog->type == ZoomDialog::BILINEAR) {
+        Image *newI = ImageEdit::bilinear(Image::getCurImage(), zoomDialog->newWidth, zoomDialog->newHeight);
+        Image::addImage(newI);
+        this->showImage();
+    }
+    if (zoomDialog->type == ZoomDialog::BICUBIC) {
+        Image *newI = ImageEdit::bicubic(Image::getCurImage(), zoomDialog->newWidth, zoomDialog->newHeight);
+        Image::addImage(newI);
+        this->showImage();
+    }
+    fflush(stdout);
 }
 
 void MainWindow::PSNRCalcShow() {
-
+    if (!this->editImagePrecheck()) return;
+    QString fileName = QFileDialog::getOpenFileName(this, QString::fromStdString(Constants::PSNR_DIALOG), "", QString::fromStdString(Constants::OPEN_IMAGE_FILTER));
+    if (!fileName.isEmpty()) {
+        QImage *qimg = new QImage();
+        if (qimg->load(fileName)) {
+            Image *refer = Image::fromQImage(qimg);
+            if ((refer->height == Image::getCurImage()->height) &&
+                (refer->width == Image::getCurImage()->width)) {
+                PSNRData data = ImageEdit::calcPSNR(Image::getCurImage(), refer);
+                pSNRDialog->initData(data);
+                pSNRDialog->exec();
+            } else {
+                QMessageBox::information(this, Constants::PSNR.c_str(),
+                                         Constants::PSNR_ILLEGAL_CAPTION(Image::getCurImage()->width, Image::getCurImage()->height, refer->width, refer->height).c_str(), QMessageBox::Ok);
+            }
+            delete refer;
+            delete qimg;
+        }
+    }
 }
 
 MainWindow::~MainWindow()
