@@ -30,7 +30,11 @@ SOURCES += main.cpp\
     KImageView.cpp \
     HistogramDialog.cpp \
     HistogramView.cpp \
-    Histogram.cpp
+    Histogram.cpp \
+    ImageEdit.cpp \
+    BrightDialog.cpp \
+    ContrastDialog.cpp \
+    ZoomDialog.cpp
 
 HEADERS  += MainWindow.h \
     Constants.h \
@@ -38,4 +42,8 @@ HEADERS  += MainWindow.h \
     KImageView.h \
     HistogramDialog.h \
     HistogramView.h \
-    Histogram.h
+    Histogram.h \
+    ImageEdit.h \
+    BrightDialog.h \
+    ContrastDialog.h \
+    ZoomDialog.h

@@ -24,7 +24,8 @@ void KImageView::loadImage(Image *img) {
         scene->setSceneRect(0, 0, img->width, img->height);
         scene->addPixmap(*(img->toQPixmap()));
         this->show();
-    }
+    } else
+        scene->clear();
 }
 
 void KImageView::loadImage() {

@@ -27,13 +27,19 @@ MainWindow::MainWindow(QWidget *parent)
                 this->saveImageButton = new QPushButton(this);
                 this->saveImageButton->setText(Constants::SAVE_IMAGE_CAPTION.c_str());
                 this->ioLayout->addWidget(this->saveImageButton);
+                this->undoButton = new QPushButton(this);
+                this->undoButton->setText(Constants::UNDO_CAPTION.c_str());
+                this->ioLayout->addWidget(this->undoButton);
             this->buttonLayout->addWidget(this->ioGroupBox);
             this->histogramGroupBox = new QGroupBox(this);
             this->histogramLayout = new QGridLayout();
             this->histogramGroupBox->setLayout(this->histogramLayout);
                 this->showHistogramButton = new QPushButton(this);
                 this->showHistogramButton->setText(Constants::SHOW_HISTOGRAM_CAPTION.c_str());
-                this->histogramLayout->addWidget(this->showHistogramButton, 0, 0, 1, 2);
+                this->histogramLayout->addWidget(this->showHistogramButton, 0, 0, 1, 1);
+                this->contrastButton = new QPushButton(this);
+                this->contrastButton->setText(Constants::CONTRAST_CAPTION.c_str());
+                this->histogramLayout->addWidget(this->contrastButton, 0, 1, 1, 1);
                 this->brightButton = new QPushButton(this);
                 this->brightButton->setText(Constants::BRIGHT_CAPTION.c_str());
                 this->histogramLayout->addWidget(this->brightButton, 1, 0, 1, 1);
@@ -49,24 +55,30 @@ MainWindow::MainWindow(QWidget *parent)
             this->histogramGroupBox->setTitle(Constants::HISTOGRAM_GROUP_TITLE.c_str());
             this->buttonLayout->addWidget(this->histogramGroupBox);
             this->resamplingGroupBox = new QGroupBox(this);
-            this->resamplingLayout = new QVBoxLayout();
+            this->resamplingLayout = new QGridLayout();
             this->resamplingGroupBox->setLayout(this->resamplingLayout);
+                this->blurButton = new QPushButton(this);
+                this->blurButton->setText(Constants::BLUR_CAPTION.c_str());
+                this->resamplingLayout->addWidget(this->blurButton, 0, 0, 1, 1);
                 this->resamplingButton = new QPushButton(this);
                 this->resamplingButton->setText(Constants::RESAMPLING_CAPTION.c_str());
-                this->resamplingLayout->addWidget(this->resamplingButton);
+                this->resamplingLayout->addWidget(this->resamplingButton, 0, 1, 1, 1);
+                this->PSNRButton = new QPushButton(this);
+                this->PSNRButton->setText(Constants::PSNR_CAPTION.c_str());
+                this->resamplingLayout->addWidget(this->PSNRButton, 1, 0, 1, 2);
             this->resamplingGroupBox->setTitle(Constants::RESAMPLING_GROUP_TITLE.c_str());
             this->buttonLayout->addWidget(this->resamplingGroupBox);
-            this->fourierGroupBox = new QGroupBox(this);
-            this->fourierLayout = new QVBoxLayout();
-            this->fourierGroupBox->setLayout(this->fourierLayout);
-                this->showFourierButton = new QPushButton(this);
-                this->showFourierButton->setText(Constants::SHOW_FOURIER_CAPTION.c_str());
-                this->fourierLayout->addWidget(this->showFourierButton);
-                this->fourierFusionButton = new QPushButton(this);
-                this->fourierFusionButton->setText(Constants::FOURIER_FUSION_CAPTION.c_str());
-                this->fourierLayout->addWidget(this->fourierFusionButton);
-            this->fourierGroupBox->setTitle(Constants::FOURIER_GROUP_TITLE.c_str());
-            this->buttonLayout->addWidget(this->fourierGroupBox);
+            this->rotateGroupBox = new QGroupBox(this);
+            this->rotateLayout = new QVBoxLayout();
+            this->rotateGroupBox->setLayout(this->rotateLayout);
+                this->rotateButton = new QPushButton(this);
+                this->rotateButton->setText(Constants::ROTATE_CAPTION.c_str());
+                this->rotateLayout->addWidget(this->rotateButton);
+                this->sphereButton = new QPushButton(this);
+                this->sphereButton->setText(Constants::SPHERE_CAPTION.c_str());
+                this->rotateLayout->addWidget(this->sphereButton);
+            this->rotateGroupBox->setTitle(Constants::ROTATE_GROUP_TITLE.c_str());
+            this->buttonLayout->addWidget(this->rotateGroupBox);
             this->forgreyGroupBox = new QGroupBox(this);
             this->forgreyLayout = new QVBoxLayout();
             this->forgreyGroupBox->setLayout(this->forgreyLayout);
@@ -90,6 +102,10 @@ MainWindow::MainWindow(QWidget *parent)
     this->setCentralWidget(this->centralWidget);
 
     this->histogramDialog = new HistogramDialog(this);
+    this->brightDialog = new BrightDialog(this);
+    this->contrastDialog = new ContrastDialog(this);
+
+    this->zoomDialog = new ZoomDialog(this);
 
     this->statusBar = new QStatusBar(this);
     this->setStatusBar(this->statusBar);
@@ -97,7 +113,16 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(openImageButton, SIGNAL(clicked(bool)), this, SLOT(loadImage()));
     connect(saveImageButton, SIGNAL(clicked(bool)), this, SLOT(saveImage()));
+    connect(undoButton, SIGNAL(clicked(bool)), this, SLOT(undo()));
     connect(showHistogramButton, SIGNAL(clicked(bool)), this, SLOT(showHistogram()));
+    connect(contrastButton, SIGNAL(clicked(bool)), this, SLOT(contrastShow()));
+    connect(brightButton, SIGNAL(clicked(bool)), this, SLOT(brightShow()));
+    connect(gammaButton, SIGNAL(clicked(bool)), this, SLOT(gammaShow()));
+    connect(histogramEqualizationButton, SIGNAL(clicked(bool)), this, SLOT(histogramEqualization()));
+    connect(histogramMatchButton, SIGNAL(clicked(bool)), this, SLOT(histogramMatch()));
+    connect(blurButton, SIGNAL(clicked(bool)), this, SLOT(blurShow()));
+    connect(resamplingButton, SIGNAL(clicked(bool)), this, SLOT(resamplingShow()));
+    connect(PSNRButton, SIGNAL(clicked(bool)), this, SLOT(PSNRCalcShow()));
 }
 
 void MainWindow::loadImage() {
@@ -136,6 +161,12 @@ void MainWindow::saveImage() {
     }
 }
 
+void MainWindow::undo() {
+    if (!this->editImagePrecheck()) return;
+    Image::deleteEntry();
+    this->showImage();
+}
+
 void MainWindow::showHistogram() {
     if (!this->editImagePrecheck()) return;
     Image::getCurImage()->calcHistogram();
@@ -146,6 +177,92 @@ void MainWindow::showHistogram() {
     histogramDialog->setHistogram(Image::getCurImage()->histogram);
     histogramDialog->reDraw();
     histogramDialog->show();
+}
+
+void MainWindow::brightShow() {
+    if (!this->editImagePrecheck()) return;
+    brightDialog->type = BrightDialog::NoType;
+    brightDialog->exec();
+    if (brightDialog->type == BrightDialog::UniformType) {
+        Image *newI = ImageEdit::brightAdjust(Image::getCurImage(), brightDialog->value0);
+        Image::addImage(newI);
+        this->showImage();
+    }
+    if (brightDialog->type == BrightDialog::SeparateType) {
+        Image *newI = ImageEdit::brightAdjust(Image::getCurImage(), brightDialog->value0, brightDialog->value1, brightDialog->value2);
+        Image::addImage(newI);
+        this->showImage();
+    }
+}
+
+void MainWindow::contrastShow() {
+    if (!this->editImagePrecheck()) return;
+    contrastDialog->available = false;
+    contrastDialog->exec();
+    if (contrastDialog->available) {
+        Image *newI = ImageEdit::contrastAdjust(Image::getCurImage(), contrastDialog->minV, contrastDialog->maxV);
+        Image::addImage(newI);
+        this->showImage();
+    }
+}
+
+void MainWindow::gammaShow() {
+    if (!this->editImagePrecheck()) return;
+    bool *b = new bool(false);
+    QString str = QInputDialog::getText(this, Constants::GAMMA_CAPTION.c_str(), Constants::GAMMA_DIALOG_CAPTION.c_str(), QLineEdit::Normal, "1.0", b);
+    if (b) {
+        string s = str.toStdString();
+        double d;
+        bool legal = true;
+        for (int i=0; i < s.length(); ++i)
+            if (((s[i] >= '0') && (s[i] <= '9')) || (s[i] == '.')) ; else legal = false;
+        if (legal) {
+            d = atof(s.c_str());
+            if (d < 0.0f) legal = false;
+        }
+        if (!legal) {
+            QMessageBox::information(this, Constants::GAMMA_CAPTION.c_str(), Constants::ILLEGAL_VALUE.c_str(), QMessageBox::Ok);
+        } else {
+            Image *newI = ImageEdit::gammaAdjust(Image::getCurImage(), d);
+            Image::addImage(newI);
+            this->showImage();
+        }
+    }
+}
+
+void MainWindow::histogramEqualization() {
+    if (!this->editImagePrecheck()) return;
+    Image *newI = ImageEdit::histogramEqualization(Image::getCurImage());
+    Image::addImage(newI);
+    this->showImage();
+}
+
+void MainWindow::histogramMatch() {
+    if (!this->editImagePrecheck()) return;
+    QString fileName = QFileDialog::getOpenFileName(this, QString::fromStdString(Constants::STYLIZE_DIALOG), "", QString::fromStdString(Constants::OPEN_IMAGE_FILTER));
+    if (!fileName.isEmpty()) {
+        QImage *qimg = new QImage();
+        if (qimg->load(fileName)) {
+            Image *refer = Image::fromQImage(qimg);
+            Image *newI = ImageEdit::histogramStylize(Image::getCurImage(), refer);
+            Image::addImage(newI);
+            this->showImage();
+            delete refer;
+            delete qimg;
+        }
+    }
+}
+
+void MainWindow::blurShow() {
+
+}
+
+void MainWindow::resamplingShow() {
+    zoomDialog->exec();
+}
+
+void MainWindow::PSNRCalcShow() {
+
 }
 
 MainWindow::~MainWindow()

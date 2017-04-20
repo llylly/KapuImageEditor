@@ -13,12 +13,17 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QStatusBar>
+#include <QtWidgets/QInputDialog>
 #include <QMessageBox>
 #include <QFileDialog>
 #include "Constants.h"
 #include "Image.h"
 #include "KImageView.h"
 #include "HistogramDialog.h"
+#include "BrightDialog.h"
+#include "ImageEdit.h"
+#include "ContrastDialog.h"
+#include "ZoomDialog.h"
 
 class MainWindow : public QMainWindow
 {
@@ -36,27 +41,31 @@ private:
     QGroupBox *ioGroupBox;
     QGroupBox *histogramGroupBox;
     QGroupBox *resamplingGroupBox;
-    QGroupBox *fourierGroupBox;
+    QGroupBox *rotateGroupBox;
     QGroupBox *forgreyGroupBox;
     QGroupBox *aboutGroupBox;
 
     QPushButton *openImageButton;
     QPushButton *saveImageButton;
+    QPushButton *undoButton;
     QVBoxLayout *ioLayout;
 
     QPushButton *showHistogramButton;
     QPushButton *brightButton;
+    QPushButton *contrastButton;
     QPushButton *gammaButton;
     QPushButton *histogramEqualizationButton;
     QPushButton *histogramMatchButton;
     QGridLayout *histogramLayout;
 
+    QPushButton *blurButton;
     QPushButton *resamplingButton;
-    QVBoxLayout *resamplingLayout;
+    QPushButton *PSNRButton;
+    QGridLayout *resamplingLayout;
 
-    QPushButton *showFourierButton;
-    QPushButton *fourierFusionButton;
-    QVBoxLayout *fourierLayout;
+    QPushButton *rotateButton;
+    QPushButton *sphereButton;
+    QVBoxLayout *rotateLayout;
 
     QPushButton *pointDetectButton;
     QPushButton *differenceDetectButton;
@@ -66,6 +75,10 @@ private:
     QVBoxLayout *aboutLayout;
 
     HistogramDialog *histogramDialog;
+    BrightDialog *brightDialog;
+    ContrastDialog *contrastDialog;
+
+    ZoomDialog *zoomDialog;
 
     bool editImagePrecheck();
     void showImage();
@@ -73,7 +86,16 @@ private:
 private slots:
     void loadImage();
     void saveImage();
+    void undo();
     void showHistogram();
+    void brightShow();
+    void contrastShow();
+    void gammaShow();
+    void histogramEqualization();
+    void histogramMatch();
+    void blurShow();
+    void resamplingShow();
+    void PSNRCalcShow();
 
 public:
 
