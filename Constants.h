@@ -99,7 +99,7 @@ public:
     static string BLUR_ILLEGAL_VALUE;
     static string BLUR_NO_CHOOSE;
     static int BLUR_LIMIT;
-
+    static string DIFF_OPEN_DIALOG;
     static int ABOUT_DIALOG_WIDTH;
     static int ABOUT_DIALOG_HEIGHT;
 

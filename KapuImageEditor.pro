@@ -37,7 +37,8 @@ SOURCES += main.cpp\
     ZoomDialog.cpp \
     PSNRDialog.cpp \
     BlurDialog.cpp \
-    AboutDialog.cpp
+    AboutDialog.cpp \
+    DifferenceDialog.cpp
 
 HEADERS  += MainWindow.h \
     Constants.h \
@@ -52,4 +53,5 @@ HEADERS  += MainWindow.h \
     ZoomDialog.h \
     PSNRDialog.h \
     BlurDialog.h \
-    AboutDialog.h
+    AboutDialog.h \
+    DifferenceDialog.h

@@ -331,6 +331,24 @@ void MainWindow::keyPointShow() {
 
 void MainWindow::diffShow() {
     if (!this->editImagePrecheck()) return;
+    if (!Image::getCurImage()->keypointAvailable)
+        keyPointShow();
+    if (!Image::getCurImage()->featureVecAvailble)
+        Image::getCurImage()->calcFeatureVec();
+    cerr << "local feature finished" << endl;
+    QString fileName = QFileDialog::getOpenFileName(this, QString::fromStdString(Constants::DIFF_OPEN_DIALOG), "", QString::fromStdString(Constants::OPEN_IMAGE_FILTER));
+    if (!fileName.isEmpty()) {
+        QImage *qimg = new QImage();
+        if (qimg->load(fileName)) {
+            Image *refer = Image::fromQImage(qimg);
+            refer->calcKeyPoint(true);
+            refer->calcFeatureVec(true);
+            Image::getCurImage()->featureMatch(refer);
+            this->showImage();
+            delete refer;
+            delete qimg;
+        }
+    }
 }
 
 void MainWindow::aboutShow() {

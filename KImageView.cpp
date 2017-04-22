@@ -6,7 +6,7 @@ const QBrush KImageView::line = QBrush(QColor(255, 0, 0));
 const QPen KImageView::linePen = QPen(KImageView::line, KImageView::width);
 const QBrush KImageView::matchBack = QBrush(QColor(43, 142, 0, 100));
 const QBrush KImageView::matchLine = QBrush(QColor(43, 142, 0));
-const QPen KImageView::matchLinePen = QPen(KImageView::line, KImageView::width);
+const QPen KImageView::matchLinePen = QPen(KImageView::matchLine, KImageView::width);
 const int KImageView::pointRadius = 6;
 
 KImageView::KImageView(QWidget *parent): QGraphicsView(parent)
