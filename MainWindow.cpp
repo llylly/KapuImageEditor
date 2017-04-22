@@ -27,13 +27,19 @@ MainWindow::MainWindow(QWidget *parent)
                 this->saveImageButton = new QPushButton(this);
                 this->saveImageButton->setText(Constants::SAVE_IMAGE_CAPTION.c_str());
                 this->ioLayout->addWidget(this->saveImageButton);
+                this->undoButton = new QPushButton(this);
+                this->undoButton->setText(Constants::UNDO_CAPTION.c_str());
+                this->ioLayout->addWidget(this->undoButton);
             this->buttonLayout->addWidget(this->ioGroupBox);
             this->histogramGroupBox = new QGroupBox(this);
             this->histogramLayout = new QGridLayout();
             this->histogramGroupBox->setLayout(this->histogramLayout);
                 this->showHistogramButton = new QPushButton(this);
                 this->showHistogramButton->setText(Constants::SHOW_HISTOGRAM_CAPTION.c_str());
-                this->histogramLayout->addWidget(this->showHistogramButton, 0, 0, 1, 2);
+                this->histogramLayout->addWidget(this->showHistogramButton, 0, 0, 1, 1);
+                this->contrastButton = new QPushButton(this);
+                this->contrastButton->setText(Constants::CONTRAST_CAPTION.c_str());
+                this->histogramLayout->addWidget(this->contrastButton, 0, 1, 1, 1);
                 this->brightButton = new QPushButton(this);
                 this->brightButton->setText(Constants::BRIGHT_CAPTION.c_str());
                 this->histogramLayout->addWidget(this->brightButton, 1, 0, 1, 1);
@@ -49,24 +55,30 @@ MainWindow::MainWindow(QWidget *parent)
             this->histogramGroupBox->setTitle(Constants::HISTOGRAM_GROUP_TITLE.c_str());
             this->buttonLayout->addWidget(this->histogramGroupBox);
             this->resamplingGroupBox = new QGroupBox(this);
-            this->resamplingLayout = new QVBoxLayout();
+            this->resamplingLayout = new QGridLayout();
             this->resamplingGroupBox->setLayout(this->resamplingLayout);
+                this->blurButton = new QPushButton(this);
+                this->blurButton->setText(Constants::BLUR_CAPTION.c_str());
+                this->resamplingLayout->addWidget(this->blurButton, 0, 0, 1, 1);
                 this->resamplingButton = new QPushButton(this);
                 this->resamplingButton->setText(Constants::RESAMPLING_CAPTION.c_str());
-                this->resamplingLayout->addWidget(this->resamplingButton);
+                this->resamplingLayout->addWidget(this->resamplingButton, 0, 1, 1, 1);
+                this->PSNRButton = new QPushButton(this);
+                this->PSNRButton->setText(Constants::PSNR_CAPTION.c_str());
+                this->resamplingLayout->addWidget(this->PSNRButton, 1, 0, 1, 2);
             this->resamplingGroupBox->setTitle(Constants::RESAMPLING_GROUP_TITLE.c_str());
             this->buttonLayout->addWidget(this->resamplingGroupBox);
-            this->fourierGroupBox = new QGroupBox(this);
-            this->fourierLayout = new QVBoxLayout();
-            this->fourierGroupBox->setLayout(this->fourierLayout);
-                this->showFourierButton = new QPushButton(this);
-                this->showFourierButton->setText(Constants::SHOW_FOURIER_CAPTION.c_str());
-                this->fourierLayout->addWidget(this->showFourierButton);
-                this->fourierFusionButton = new QPushButton(this);
-                this->fourierFusionButton->setText(Constants::FOURIER_FUSION_CAPTION.c_str());
-                this->fourierLayout->addWidget(this->fourierFusionButton);
-            this->fourierGroupBox->setTitle(Constants::FOURIER_GROUP_TITLE.c_str());
-            this->buttonLayout->addWidget(this->fourierGroupBox);
+            this->rotateGroupBox = new QGroupBox(this);
+            this->rotateLayout = new QVBoxLayout();
+            this->rotateGroupBox->setLayout(this->rotateLayout);
+                this->rotateButton = new QPushButton(this);
+                this->rotateButton->setText(Constants::ROTATE_CAPTION.c_str());
+                this->rotateLayout->addWidget(this->rotateButton);
+                this->sphereButton = new QPushButton(this);
+                this->sphereButton->setText(Constants::SPHERE_CAPTION.c_str());
+                this->rotateLayout->addWidget(this->sphereButton);
+            this->rotateGroupBox->setTitle(Constants::ROTATE_GROUP_TITLE.c_str());
+            this->buttonLayout->addWidget(this->rotateGroupBox);
             this->forgreyGroupBox = new QGroupBox(this);
             this->forgreyLayout = new QVBoxLayout();
             this->forgreyGroupBox->setLayout(this->forgreyLayout);
@@ -90,14 +102,35 @@ MainWindow::MainWindow(QWidget *parent)
     this->setCentralWidget(this->centralWidget);
 
     this->histogramDialog = new HistogramDialog(this);
+    this->brightDialog = new BrightDialog(this);
+    this->contrastDialog = new ContrastDialog(this);
+    this->pSNRDialog = new PSNRDialog(this);
+    this->aboutDialog = new AboutDialog(this);
+
+    this->zoomDialog = new ZoomDialog(this);
+    this->blurDialog = new BlurDialog(this);
 
     this->statusBar = new QStatusBar(this);
     this->setStatusBar(this->statusBar);
     this->statusBar->showMessage(Constants::DEFAULT_STATUS_BAR.c_str());
 
+    this->rotateGroupBox->setVisible(false);
+
     connect(openImageButton, SIGNAL(clicked(bool)), this, SLOT(loadImage()));
     connect(saveImageButton, SIGNAL(clicked(bool)), this, SLOT(saveImage()));
+    connect(undoButton, SIGNAL(clicked(bool)), this, SLOT(undo()));
     connect(showHistogramButton, SIGNAL(clicked(bool)), this, SLOT(showHistogram()));
+    connect(contrastButton, SIGNAL(clicked(bool)), this, SLOT(contrastShow()));
+    connect(brightButton, SIGNAL(clicked(bool)), this, SLOT(brightShow()));
+    connect(gammaButton, SIGNAL(clicked(bool)), this, SLOT(gammaShow()));
+    connect(histogramEqualizationButton, SIGNAL(clicked(bool)), this, SLOT(histogramEqualization()));
+    connect(histogramMatchButton, SIGNAL(clicked(bool)), this, SLOT(histogramMatch()));
+    connect(blurButton, SIGNAL(clicked(bool)), this, SLOT(blurShow()));
+    connect(resamplingButton, SIGNAL(clicked(bool)), this, SLOT(resamplingShow()));
+    connect(PSNRButton, SIGNAL(clicked(bool)), this, SLOT(PSNRCalcShow()));
+    connect(pointDetectButton, SIGNAL(clicked(bool)), this, SLOT(keyPointShow()));
+    connect(differenceDetectButton, SIGNAL(clicked(bool)), this, SLOT(diffShow()));
+    connect(aboutButton, SIGNAL(clicked(bool)), this, SLOT(aboutShow()));
 }
 
 void MainWindow::loadImage() {
@@ -136,6 +169,12 @@ void MainWindow::saveImage() {
     }
 }
 
+void MainWindow::undo() {
+    if (!this->editImagePrecheck()) return;
+    Image::deleteEntry();
+    this->showImage();
+}
+
 void MainWindow::showHistogram() {
     if (!this->editImagePrecheck()) return;
     Image::getCurImage()->calcHistogram();
@@ -146,6 +185,156 @@ void MainWindow::showHistogram() {
     histogramDialog->setHistogram(Image::getCurImage()->histogram);
     histogramDialog->reDraw();
     histogramDialog->show();
+}
+
+void MainWindow::brightShow() {
+    if (!this->editImagePrecheck()) return;
+    brightDialog->type = BrightDialog::NoType;
+    brightDialog->exec();
+    if (brightDialog->type == BrightDialog::UniformType) {
+        Image *newI = ImageEdit::brightAdjust(Image::getCurImage(), brightDialog->value0);
+        Image::addImage(newI);
+        this->showImage();
+    }
+    if (brightDialog->type == BrightDialog::SeparateType) {
+        Image *newI = ImageEdit::brightAdjust(Image::getCurImage(), brightDialog->value0, brightDialog->value1, brightDialog->value2);
+        Image::addImage(newI);
+        this->showImage();
+    }
+}
+
+void MainWindow::contrastShow() {
+    if (!this->editImagePrecheck()) return;
+    contrastDialog->available = false;
+    contrastDialog->exec();
+    if (contrastDialog->available) {
+        Image *newI = ImageEdit::contrastAdjust(Image::getCurImage(), contrastDialog->minV, contrastDialog->maxV);
+        Image::addImage(newI);
+        this->showImage();
+    }
+}
+
+void MainWindow::gammaShow() {
+    if (!this->editImagePrecheck()) return;
+    bool *b = new bool(false);
+    QString str = QInputDialog::getText(this, Constants::GAMMA_CAPTION.c_str(), Constants::GAMMA_DIALOG_CAPTION.c_str(), QLineEdit::Normal, "1.0", b);
+    if (b) {
+        string s = str.toStdString();
+        double d;
+        bool legal = true;
+        for (int i=0; i < s.length(); ++i)
+            if (((s[i] >= '0') && (s[i] <= '9')) || (s[i] == '.')) ; else legal = false;
+        if (legal) {
+            d = atof(s.c_str());
+            if (d < 0.0f) legal = false;
+        }
+        if (!legal) {
+            QMessageBox::information(this, Constants::GAMMA_CAPTION.c_str(), Constants::ILLEGAL_VALUE.c_str(), QMessageBox::Ok);
+        } else {
+            Image *newI = ImageEdit::gammaAdjust(Image::getCurImage(), d);
+            Image::addImage(newI);
+            this->showImage();
+        }
+    }
+}
+
+void MainWindow::histogramEqualization() {
+    if (!this->editImagePrecheck()) return;
+    Image *newI = ImageEdit::histogramEqualization(Image::getCurImage());
+    Image::addImage(newI);
+    this->showImage();
+}
+
+void MainWindow::histogramMatch() {
+    if (!this->editImagePrecheck()) return;
+    QString fileName = QFileDialog::getOpenFileName(this, QString::fromStdString(Constants::STYLIZE_DIALOG), "", QString::fromStdString(Constants::OPEN_IMAGE_FILTER));
+    if (!fileName.isEmpty()) {
+        QImage *qimg = new QImage();
+        if (qimg->load(fileName)) {
+            Image *refer = Image::fromQImage(qimg);
+            Image *newI = ImageEdit::histogramStylize(Image::getCurImage(), refer);
+            Image::addImage(newI);
+            this->showImage();
+            delete refer;
+            delete qimg;
+        }
+    }
+}
+
+void MainWindow::blurShow() {
+    if (!this->editImagePrecheck()) return;
+    blurDialog->type = BlurDialog::NO_TYPE;
+    blurDialog->exec();
+    if (blurDialog->type != BlurDialog::NO_TYPE) {
+        Image *newI = NULL;
+        if (blurDialog->type == BlurDialog::UNIFORM)
+            newI = ImageEdit::uniformBlur(Image::getCurImage(), blurDialog->radius);
+        if (blurDialog->type == BlurDialog::GAUSSIAN)
+            newI = ImageEdit::gaussianBlur(Image::getCurImage(), blurDialog->radius);
+        if (blurDialog->type == BlurDialog::MOSAIC)
+            newI = ImageEdit::mosaicBlur(Image::getCurImage(), blurDialog->radius);
+        Image::addImage(newI);
+        this->showImage();
+    }
+}
+
+void MainWindow::resamplingShow() {
+    if (!this->editImagePrecheck()) return;
+    zoomDialog->type = ZoomDialog::NO_TYPE;
+    zoomDialog->exec();
+    if (zoomDialog->type == ZoomDialog::NEAREST_NEIGHBOR) {
+        Image *newI = ImageEdit::nearestNeighbor(Image::getCurImage(), zoomDialog->newWidth, zoomDialog->newHeight);
+        Image::addImage(newI);
+        this->showImage();
+    }
+    if (zoomDialog->type == ZoomDialog::BILINEAR) {
+        Image *newI = ImageEdit::bilinear(Image::getCurImage(), zoomDialog->newWidth, zoomDialog->newHeight);
+        Image::addImage(newI);
+        this->showImage();
+    }
+    if (zoomDialog->type == ZoomDialog::BICUBIC) {
+        Image *newI = ImageEdit::bicubic(Image::getCurImage(), zoomDialog->newWidth, zoomDialog->newHeight);
+        Image::addImage(newI);
+        this->showImage();
+    }
+    fflush(stdout);
+}
+
+void MainWindow::PSNRCalcShow() {
+    if (!this->editImagePrecheck()) return;
+    QString fileName = QFileDialog::getOpenFileName(this, QString::fromStdString(Constants::PSNR_DIALOG), "", QString::fromStdString(Constants::OPEN_IMAGE_FILTER));
+    if (!fileName.isEmpty()) {
+        QImage *qimg = new QImage();
+        if (qimg->load(fileName)) {
+            Image *refer = Image::fromQImage(qimg);
+            if ((refer->height == Image::getCurImage()->height) &&
+                (refer->width == Image::getCurImage()->width)) {
+                PSNRData data = ImageEdit::calcPSNR(Image::getCurImage(), refer);
+                pSNRDialog->initData(data);
+                pSNRDialog->exec();
+            } else {
+                QMessageBox::information(this, Constants::PSNR.c_str(),
+                                         Constants::PSNR_ILLEGAL_CAPTION(Image::getCurImage()->width, Image::getCurImage()->height, refer->width, refer->height).c_str(), QMessageBox::Ok);
+            }
+            delete refer;
+            delete qimg;
+        }
+    }
+}
+
+void MainWindow::keyPointShow() {
+    if (!this->editImagePrecheck()) return;
+    Image::addImage(Image::fromImage(Image::getCurImage()));
+    Image::getCurImage()->calcKeyPoint(false);
+    this->showImage();
+}
+
+void MainWindow::diffShow() {
+    if (!this->editImagePrecheck()) return;
+}
+
+void MainWindow::aboutShow() {
+    aboutDialog->exec();
 }
 
 MainWindow::~MainWindow()

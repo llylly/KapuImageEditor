@@ -18,7 +18,7 @@ HistogramDialog::HistogramDialog(QWidget *parent): QDialog(parent)
     this->setModal(true);
     this->setWindowFlags(this->windowFlags() & ~Qt::WindowMaximizeButtonHint);
     this->setWindowTitle(Constants::HISTOGRAM_DIALOG.c_str());
-    connect(okButton, SIGNAL(clicked(bool)), this, SLOT(hide()));
+    connect(okButton, SIGNAL(clicked(bool)), this, SLOT(close()));
 }
 
 void HistogramDialog::setHistogram(Histogram *hist) {
