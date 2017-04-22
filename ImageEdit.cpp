@@ -1,4 +1,5 @@
 #include "ImageEdit.h"
+#include "Image.h"
 
 #define EPS 1e-6
 

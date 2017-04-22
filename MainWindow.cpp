@@ -324,6 +324,8 @@ void MainWindow::PSNRCalcShow() {
 
 void MainWindow::keyPointShow() {
     if (!this->editImagePrecheck()) return;
+    Image::getCurImage()->calcKeyPoint(false);
+    this->showImage();
 }
 
 void MainWindow::diffShow() {

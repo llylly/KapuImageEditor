@@ -4,8 +4,9 @@
 #include <cstdlib>
 #include <ctime>
 #include <cmath>
-#include "Image.h"
 #include "Constants.h"
+
+class Image;
 
 struct DoubleColor {
     double R, G, B;
