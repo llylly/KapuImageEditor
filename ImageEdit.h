@@ -46,6 +46,8 @@ public:
 
 private:
     static DoubleColor getApproxV(Image *img, double r, double c, int refR, int refC);
+    static int adjustR(Image *img, int r);
+    static int adjustC(Image *img, int c);
 };
 
 #endif // IMAGEEDIT_H

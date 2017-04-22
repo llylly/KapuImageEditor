@@ -26,6 +26,7 @@
 #include "ZoomDialog.h"
 #include "PSNRDialog.h"
 #include "BlurDialog.h"
+#include "AboutDialog.h"
 
 class MainWindow : public QMainWindow
 {
@@ -80,6 +81,7 @@ private:
     BrightDialog *brightDialog;
     ContrastDialog *contrastDialog;
     PSNRDialog *pSNRDialog;
+    AboutDialog *aboutDialog;
 
     ZoomDialog *zoomDialog;
     BlurDialog *blurDialog;
@@ -100,6 +102,9 @@ private slots:
     void blurShow();
     void resamplingShow();
     void PSNRCalcShow();
+    void keyPointShow();
+    void diffShow();
+    void aboutShow();
 
 public:
 

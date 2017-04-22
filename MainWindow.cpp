@@ -105,6 +105,7 @@ MainWindow::MainWindow(QWidget *parent)
     this->brightDialog = new BrightDialog(this);
     this->contrastDialog = new ContrastDialog(this);
     this->pSNRDialog = new PSNRDialog(this);
+    this->aboutDialog = new AboutDialog(this);
 
     this->zoomDialog = new ZoomDialog(this);
     this->blurDialog = new BlurDialog(this);
@@ -112,6 +113,8 @@ MainWindow::MainWindow(QWidget *parent)
     this->statusBar = new QStatusBar(this);
     this->setStatusBar(this->statusBar);
     this->statusBar->showMessage(Constants::DEFAULT_STATUS_BAR.c_str());
+
+    this->rotateGroupBox->setVisible(false);
 
     connect(openImageButton, SIGNAL(clicked(bool)), this, SLOT(loadImage()));
     connect(saveImageButton, SIGNAL(clicked(bool)), this, SLOT(saveImage()));
@@ -125,6 +128,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(blurButton, SIGNAL(clicked(bool)), this, SLOT(blurShow()));
     connect(resamplingButton, SIGNAL(clicked(bool)), this, SLOT(resamplingShow()));
     connect(PSNRButton, SIGNAL(clicked(bool)), this, SLOT(PSNRCalcShow()));
+    connect(pointDetectButton, SIGNAL(clicked(bool)), this, SLOT(keyPointShow()));
+    connect(differenceDetectButton, SIGNAL(clicked(bool)), this, SLOT(diffShow()));
+    connect(aboutButton, SIGNAL(clicked(bool)), this, SLOT(aboutShow()));
 }
 
 void MainWindow::loadImage() {
@@ -314,6 +320,18 @@ void MainWindow::PSNRCalcShow() {
             delete qimg;
         }
     }
+}
+
+void MainWindow::keyPointShow() {
+    if (!this->editImagePrecheck()) return;
+}
+
+void MainWindow::diffShow() {
+    if (!this->editImagePrecheck()) return;
+}
+
+void MainWindow::aboutShow() {
+    aboutDialog->exec();
 }
 
 MainWindow::~MainWindow()

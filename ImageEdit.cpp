@@ -81,7 +81,7 @@ Image *ImageEdit::gammaAdjust(Image *img, double gamma) {
 
     int *lookUpTable = new int[256];
     for (int i=0; i<256; ++i) {
-        lookUpTable[i] = (int)((double)255.0f * pow((double)(i) / 255.0f, gamma) + 0.5f);
+        lookUpTable[i] = (int)((double)255.0f * pow((double)(i) / 255.0f, 1.0f / gamma) + 0.5f);
         if (lookUpTable[i] > 255) lookUpTable[i] = 255;
         if (lookUpTable[i] < 0) lookUpTable[i] = 0;
     }
@@ -423,14 +423,33 @@ Image* ImageEdit::uniformBlur(Image *img, int radius) {
     if ((img == NULL) || (img->height * img->width <= 0)) return NULL;
     if ((radius <= 0) || (radius > Constants::BLUR_LIMIT)) return NULL;
 
+    --radius;
+
     Image *ans = new Image();
     int h, w;
     ans->height = h = img->height;
     ans->width = w = img->width;
-    ans->R = new int[height * width];
-    ans->G = new int[height * width];
-    ans->B = new int[height * width];
+    ans->R = new int[h * w];
+    ans->G = new int[h * w];
+    ans->B = new int[h * w];
 
+    double ratio = 1.0f / (double)((radius * 2 + 1) * (radius * 2 + 1));
+    int r, c;
+    for (int i=0; i<h; ++i)
+        for (int j=0; j<w; ++j) {
+            double R=0.0f, G=0.0f, B=0.0f;
+            for (int ii=i-radius; ii<=i+radius; ++ii)
+                for (int jj=j-radius; jj<=j+radius; ++jj) {
+                    r = adjustR(img, ii);
+                    c = adjustC(img, jj);
+                    R += (double)img->R[I(r,c,w)] * ratio;
+                    G += (double)img->G[I(r,c,w)] * ratio;
+                    B += (double)img->B[I(r,c,w)] * ratio;
+                }
+            ans->R[I(i,j,w)] = (int)(R + 0.5f);
+            ans->G[I(i,j,w)] = (int)(G + 0.5f);
+            ans->B[I(i,j,w)] = (int)(B + 0.5f);
+        }
 
     return ans;
 }
@@ -439,14 +458,52 @@ Image* ImageEdit::gaussianBlur(Image *img, int radius) {
     if ((img == NULL) || (img->height * img->width <= 0)) return NULL;
     if ((radius <= 0) || (radius > Constants::BLUR_LIMIT)) return NULL;
 
+    --radius;
+
     Image *ans = new Image();
     int h, w;
     ans->height = h = img->height;
     ans->width = w = img->width;
-    ans->R = new int[height * width];
-    ans->G = new int[height * width];
-    ans->B = new int[height * width];
+    ans->R = new int[h * w];
+    ans->G = new int[h * w];
+    ans->B = new int[h * w];
 
+    int n = 1 + (radius << 1);
+    double *weigh = new double[n * n];
+    double normal = 0.0f;
+    if (radius)
+        for (int i=0; i<n; ++i)
+            for (int j=0; j<n; ++j) {
+                weigh[I(i,j,n)] = exp(-((i-radius) * (i-radius) + (j-radius) * (j-radius)) / (2.0f * radius * radius));
+                normal += weigh[I(i,j,n)];
+            }
+    else
+        weigh[0] = normal = 1.0f;
+    for (int i=0; i<n; ++i)
+        for (int j=0; j<n; ++j)
+            weigh[I(i,j,n)] /= normal;
+
+    int r, c;
+    for (int i=0; i<h; ++i)
+        for (int j=0; j<w; ++j) {
+            double R=0.0f, G=0.0f, B=0.0f;
+            for (int ii=0; ii<n; ++ii)
+                for (int jj=0; jj<n; ++jj) {
+                    r = adjustR(img, i + ii - radius);
+                    c = adjustC(img, j + jj - radius);
+                    R += (double)img->R[I(r,c,w)] * weigh[I(ii,jj,n)];
+                    G += (double)img->G[I(r,c,w)] * weigh[I(ii,jj,n)];
+                    B += (double)img->B[I(r,c,w)] * weigh[I(ii,jj,n)];
+                }
+            ans->R[I(i,j,w)] = (int)(R + 0.5f);
+            ans->G[I(i,j,w)] = (int)(G + 0.5f);
+            ans->B[I(i,j,w)] = (int)(B + 0.5f);
+            if (ans->R[I(i,j,w)] > 255) ans->R[I(i,j,w)] = 255;
+            if (ans->G[I(i,j,w)] > 255) ans->G[I(i,j,w)] = 255;
+            if (ans->B[I(i,j,w)] > 255) ans->B[I(i,j,w)] = 255;
+        }
+
+    delete[] weigh;
 
     return ans;
 }
@@ -459,10 +516,30 @@ Image* ImageEdit::mosaicBlur(Image *img, int radius) {
     int h, w;
     ans->height = h = img->height;
     ans->width = w = img->width;
-    ans->R = new int[height * width];
-    ans->G = new int[height * width];
-    ans->B = new int[height * width];
+    ans->R = new int[h * w];
+    ans->G = new int[h * w];
+    ans->B = new int[h * w];
 
+    for (int i=0; i<(h+radius-1)/radius; ++i)
+        for (int j=0; j<(w+radius-1)/radius; ++j) {
+            double R=0.0f, G=0.0f, B=0.0f;
+            int cnt=0;
+            for (int ii=i*radius; ii<(i+1)*radius; ++ii)
+                for (int jj=j*radius; jj<(j+1)*radius; ++jj)
+                    if ((ii < img->height) && (jj < img->width)) {
+                        R += img->R[I(ii,jj,w)];
+                        G += img->G[I(ii,jj,w)];
+                        B += img->B[I(ii,jj,w)];
+                        ++cnt;
+                    }
+            int iR = int(R/cnt + 0.5f), iG = int(G/cnt + 0.5f), iB = int(B/cnt + 0.5f);
+            for (int ii=i*radius; ii<(i+1)*radius; ++ii)
+                for (int jj=j*radius; jj<(j+1)*radius; ++jj)
+                    if ((ii < img->height) && (jj < img->width))
+                        ans->R[I(ii,jj,w)] = iR,
+                        ans->G[I(ii,jj,w)] = iG,
+                        ans->B[I(ii,jj,w)] = iB;
+        }
 
     return ans;
 }
@@ -535,4 +612,16 @@ DoubleColor ImageEdit::getApproxV(Image *img, double r, double c, int refR, int 
     ans.G += (r - refR) * rVec.G + (c - refC) * cVec.G;
     ans.B += (r - refR) * rVec.B + (c - refC) * cVec.B;
     return ans;
+}
+
+int ImageEdit::adjustR(Image *img, int r) {
+    int ans;
+    if (r < 0) ans = -r; else ans = r;
+    return ans % img->height;
+}
+
+int ImageEdit::adjustC(Image *img, int c) {
+    int ans;
+    if (c < 0) ans = -c; else ans = c;
+    return ans % img->width;
 }

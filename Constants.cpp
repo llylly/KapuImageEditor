@@ -130,6 +130,9 @@ string Constants::BLUR_ILLEGAL_VALUE = "Illegal Value. The radius should be a po
 string Constants::BLUR_NO_CHOOSE = "Please choose one blurring type.";
 int Constants::BLUR_LIMIT = 50;
 
+int Constants::ABOUT_DIALOG_WIDTH = 200;
+int Constants::ABOUT_DIALOG_HEIGHT = 200;
+
 Constants::Constants()
 {
 

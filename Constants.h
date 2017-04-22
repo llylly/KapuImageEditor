@@ -100,6 +100,9 @@ public:
     static string BLUR_NO_CHOOSE;
     static int BLUR_LIMIT;
 
+    static int ABOUT_DIALOG_WIDTH;
+    static int ABOUT_DIALOG_HEIGHT;
+
     Constants();
 };
 
