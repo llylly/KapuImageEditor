@@ -14,6 +14,8 @@ using namespace std;
 
 #define I(i,j,h) ((i)*(h)+(j))
 
+#define EPS 1e-3
+
 class Image;
 
 struct KeyPoint {
@@ -21,8 +23,10 @@ struct KeyPoint {
     int scale;
     double value;
     double orient;
-    KeyPoint(int rr, int cc): r(rr), c(cc), value(0.0f) { }
-    KeyPoint(): value(0.0f) { }
+    bool matched;
+    double *feature;
+    KeyPoint(int rr, int cc): r(rr), c(cc), value(0.0f), matched(false), feature(NULL) { }
+    KeyPoint(): value(0.0f), matched(false), feature(NULL) { }
 };
 
 struct vec2 {
@@ -60,6 +64,7 @@ public:
     static ImageEntry *getCurEntry();
 
     static Image *fromQImage(QImage *qimg);
+    static Image *fromImage(Image *img);
     uchar *toUcharArr();
     QImage *toQImage();
     QPixmap *toQPixmap();
@@ -73,6 +78,8 @@ public:
     Image();
     ~Image();
 
+    void calcKeyPoint(bool reCalc = 0);
+
     int height, width;
     int *R, *G, *B;
 
@@ -83,7 +90,6 @@ public:
     const static int W;
     bool keypointAvailable;
     vector<KeyPoint> pointSet;
-    void calcKeyPoint(bool reCalc = 0);
 
 private:
     static ImageEntry *head, *tail;

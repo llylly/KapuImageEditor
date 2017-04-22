@@ -17,7 +17,9 @@ class KImageView : public QGraphicsView
 public:
     static const int width;
     static const QBrush back, line;
+    static const QBrush matchBack, matchLine;
     static const QPen linePen;
+    static const QPen matchLinePen;
     static const int pointRadius;
 
     KImageView(QWidget *parent);

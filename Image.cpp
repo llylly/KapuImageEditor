@@ -4,7 +4,7 @@ ImageEntry *Image::head = NULL;
 ImageEntry *Image::tail = NULL;
 
 const int Image::W = 2;
-const double Image::threshold = 0.010;
+const double Image::threshold = 100.0;
 
 void Image::addImage(Image* img) {
     if ((img == NULL) || (img->height * img->width <= 0)) return;
@@ -55,6 +55,22 @@ Image *Image::fromQImage(QImage *qimg) {
             img->B[I(i,j,w)] = qBlue(qimg->pixel(j,i));
         }
     return img;
+}
+
+Image *Image::fromImage(Image* img) {
+    Image *n = new Image();
+    n->height = img->height;
+    n->width = img->width;
+    n->R = new int[n->height * n->width];
+    n->G = new int[n->height * n->width];
+    n->B = new int[n->height * n->width];
+    for (int i=0; i<img->height; ++i)
+        for (int j=0; j<img->width; ++j) {
+            n->R[I(i,j,n->width)] = img->R[I(i,j,img->width)];
+            n->G[I(i,j,n->width)] = img->G[I(i,j,img->width)];
+            n->B[I(i,j,n->width)] = img->B[I(i,j,img->width)];
+        }
+    return n;
 }
 
 uchar *Image::toUcharArr() {
@@ -138,46 +154,84 @@ void Image::calcHistogram(bool recalc) {
 void Image::calcKeyPoint(bool reCalc) {
     if (this->height * this->width <= 0) return;
     if ((reCalc) || (!keypointAvailable)) {
-        freopen("/Users/lly/Main/tmp/tmp.txt", "w", stdout);
         pointSet.clear();
 
         vector<Image*> *tower = new vector<Image*>();
-        vector<KeyPoint*> *points = new vector<KeyPoint*>();
+        vector<double*> *points = new vector<double*>();
         tower->push_back(this);
-        points->push_back(new KeyPoint[this->width * this->height]);
+        points->push_back(new double[this->width * this->height]);
 
         Image *p = this;
         while ((p->height >= 2) && (p->width >= 2)) {
             p = ImageEdit::bilinear(p, p->width >> 1, p->height >> 1);
             tower->push_back(p);
-            points->push_back(new KeyPoint[p->width * p->height]);
+            points->push_back(new double[p->width * p->height]);
         }
 
         int cnt = 0;
         for (int i=0; i<tower->size(); ++i) {
             Image *now = (*tower)[i];
-            for (int r=0; r<now->height; ++r)
-                for (int c=0; c<now->width; ++c) {
-                    ++cnt;
-                    KeyPoint *kp = calcPixel(now, r, c);
-                    (*points)[i][I(r,c,now->width)] = *kp;
-                    delete kp;
+            Image *blur = ImageEdit::gaussianBlur(now, 8);
+            for (int j=0; j<now->height * now->width; ++j)
+                (*points)[i][j] = abs(blur->R[j] - now->R[j]) +
+                    abs(blur->G[j] - now->G[j]) +
+                    abs(blur->B[j] - now->B[j]);
+            delete blur;
+        }
+
+        for (int k=tower->size() - 2; k>=1; --k) {
+            if (k > 4) continue;
+            Image *now = (*tower)[k];
+            Image *pre = (*tower)[k-1];
+            Image *nex = (*tower)[k+1];
+            double *arr = (*points)[k];
+            double *parr = (*points)[k-1];
+            double *narr = (*points)[k+1];
+            for (int i=1; i<now->height-1; ++i)
+                for (int j=1; j<now->width-1; ++j) {
+                    int pi = i << 1, pj = j << 1;
+                    int ni = i >> 1, nj = j >> 1;
+
+                    if ((pi > 0) && (pj > 0) && (ni > 0) && (nj > 0) &&
+                            (pi < pre->height-1) && (pj < pre->width-1) &&
+                            (ni < nex->height-1) && (nj < nex->width-1) &&
+                        (arr[I(i,j,now->width)] > arr[I(i-1,j,now->width)] + EPS) &&
+                        (arr[I(i,j,now->width)] > arr[I(i+1,j,now->width)] + EPS) &&
+                        (arr[I(i,j,now->width)] > arr[I(i+1,j,now->width)] + EPS) &&
+                        (arr[I(i,j,now->width)] > arr[I(i+1,j,now->width)] + EPS) &&
+                        //(arr[I(i,j,now->width)] > arr[I(i+1,j+1,now->width)] + EPS) &&
+                        //(arr[I(i,j,now->width)] > arr[I(i+1,j-1,now->width)] + EPS) &&
+                        //(arr[I(i,j,now->width)] > arr[I(i-1,j+1,now->width)] + EPS) &&
+                        //(arr[I(i,j,now->width)] > arr[I(i-1,j-1,now->width)] + EPS) &&
+
+                                                    (arr[I(i,j,now->width)] > parr[I(pi,pj,pre->width)] + EPS) &&
+                                                    (arr[I(i,j,now->width)] > parr[I(pi-1,pj,pre->width)] + EPS) &&
+                                                    (arr[I(i,j,now->width)] > parr[I(pi+1,pj,pre->width)] + EPS) &&
+                                                    (arr[I(i,j,now->width)] > parr[I(pi+1,pj,pre->width)] + EPS) &&
+                                                    (arr[I(i,j,now->width)] > parr[I(pi+1,pj,pre->width)] + EPS) &&
+                                                    //(arr[I(i,j,now->width)] > parr[I(pi+1,pj+1,pre->width)] + EPS) &&
+                                                    //(arr[I(i,j,now->width)] > parr[I(pi+1,pj-1,pre->width)] + EPS) &&
+                                                    //(arr[I(i,j,now->width)] > parr[I(pi-1,pj+1,pre->width)] + EPS) &&
+                                                    //(arr[I(i,j,now->width)] > parr[I(pi-1,pj-1,pre->width)] + EPS) &&
+                            (arr[I(i,j,now->width)] > narr[I(ni,nj,nex->width)] + EPS) &&
+                            (arr[I(i,j,now->width)] > narr[I(ni-1,nj,nex->width)] + EPS) &&
+                            (arr[I(i,j,now->width)] > narr[I(ni+1,nj,nex->width)] + EPS) &&
+                            (arr[I(i,j,now->width)] > narr[I(ni+1,nj,nex->width)] + EPS) &&
+                            (arr[I(i,j,now->width)] > narr[I(ni+1,nj,nex->width)] + EPS) &&
+                            //(arr[I(i,j,now->width)] > narr[I(ni+1,nj+1,nex->width)] + EPS) &&
+                            //(arr[I(i,j,now->width)] > narr[I(ni+1,nj-1,nex->width)] + EPS) &&
+                            //(arr[I(i,j,now->width)] > narr[I(ni-1,nj+1,nex->width)] + EPS) &&
+                            //(arr[I(i,j,now->width)] > narr[I(ni-1,nj-1,nex->width)] + EPS) &&
+                        (arr[I(i,j,now->width)] > Image::threshold)) {
+                        KeyPoint kp;
+                        if (k == 0) kp.r = i; else kp.r = (i << k) + (1 << (k-1));
+                        if (k == 0) kp.c = j; else kp.c = (j << k) + (1 << (k-1));
+                        kp.scale = 1 << k;
+                        kp.value = arr[I(i,j,now->width)];
+                        this->pointSet.push_back(kp);
+                    }
                 }
         }
-        printf("%d\n", cnt);
-
-        for (int k=tower->size() - 1; k>=0; --k)
-            for (int i=0; i<(*tower)[k]->height; ++i)
-                for (int j=0; j<(*tower)[k]->width; ++j)
-                    if ((*points)[k][I(i,j,(*tower)[k]->width)].value > Image::threshold) {
-                        KeyPoint kp;
-                        kp.r = (i << k) + (1 << ((k>0)?(k-1):k));
-                        kp.c = (j << k) + (1 << ((k>0)?(k-1):k));
-                        kp.scale = 1 << k;
-                        kp.value = (*points)[k][I(i,j,(*tower)[k]->width)].value;
-                        this->pointSet.push_back(kp);
-                        printf("KP %d %d scale:%d value:%lf\n", kp.r, kp.c, kp.scale, kp.value);
-                    }
 
         for (int i=1; i<tower->size(); ++i)
             delete (*tower)[i];
@@ -185,7 +239,6 @@ void Image::calcKeyPoint(bool reCalc) {
             delete (*points)[i];
 
         keypointAvailable = true;
-        fclose(stdout);
     }
 }
 
@@ -217,7 +270,7 @@ KeyPoint *Image::calcPixel(Image *img, int r, int c) {
     ans->c = c;
     ans->value = v / 3.0f;
 
-    printf("%d %d %lf\n", ans->r, ans->c, ans->value);
+    //printf("%d %d %lf\n", ans->r, ans->c, ans->value);
     return ans;
 }
 
