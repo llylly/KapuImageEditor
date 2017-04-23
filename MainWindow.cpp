@@ -105,6 +105,7 @@ MainWindow::MainWindow(QWidget *parent)
     this->brightDialog = new BrightDialog(this);
     this->contrastDialog = new ContrastDialog(this);
     this->pSNRDialog = new PSNRDialog(this);
+    this->diffDialog = new DifferenceDialog(this);
     this->aboutDialog = new AboutDialog(this);
 
     this->zoomDialog = new ZoomDialog(this);
@@ -335,7 +336,7 @@ void MainWindow::diffShow() {
         keyPointShow();
     if (!Image::getCurImage()->featureVecAvailble)
         Image::getCurImage()->calcFeatureVec();
-    cerr << "local feature finished" << endl;
+    //cerr << "local feature finished" << endl;
     QString fileName = QFileDialog::getOpenFileName(this, QString::fromStdString(Constants::DIFF_OPEN_DIALOG), "", QString::fromStdString(Constants::OPEN_IMAGE_FILTER));
     if (!fileName.isEmpty()) {
         QImage *qimg = new QImage();
@@ -345,8 +346,12 @@ void MainWindow::diffShow() {
             refer->calcFeatureVec(true);
             Image::getCurImage()->featureMatch(refer);
             this->showImage();
-            delete refer;
             delete qimg;
+
+            diffDialog->load(Image::getCurImage(), refer);
+            diffDialog->exec();
+
+            delete refer;
         }
     }
 }

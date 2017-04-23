@@ -27,6 +27,7 @@
 #include "PSNRDialog.h"
 #include "BlurDialog.h"
 #include "AboutDialog.h"
+#include "DifferenceDialog.h"
 
 class MainWindow : public QMainWindow
 {
@@ -81,6 +82,7 @@ private:
     BrightDialog *brightDialog;
     ContrastDialog *contrastDialog;
     PSNRDialog *pSNRDialog;
+    DifferenceDialog *diffDialog;
     AboutDialog *aboutDialog;
 
     ZoomDialog *zoomDialog;

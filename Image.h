@@ -25,11 +25,11 @@ struct KeyPoint {
     int scale;
     double value;
     double orient;
-    bool matched;
+    int matched;
     double *feature;
     double *feature2;
-    KeyPoint(int rr, int cc): r(rr), c(cc), value(0.0f), matched(false), feature(NULL), feature2(NULL) { }
-    KeyPoint(): value(0.0f), matched(false), feature(NULL), feature2(NULL) { }
+    KeyPoint(int rr, int cc): r(rr), c(cc), value(0.0f), matched(-1), feature(NULL), feature2(NULL) { }
+    KeyPoint(): value(0.0f), matched(-1), feature(NULL), feature2(NULL) { }
 };
 
 struct vec2 {

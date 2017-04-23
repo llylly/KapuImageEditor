@@ -290,7 +290,7 @@ void Image::calcFeatureVec(bool reCalc) {
             if (compdirec != -1) {
                 point->feature2 = new double[128];
                 memset(point->feature2, 0, sizeof(double) * 128);
-                cerr << "compdirec" << endl;
+                //cerr << "compdirec" << endl;
             }
 
             for (int ii = 0; ii < 4; ++ii)
@@ -306,7 +306,7 @@ void Image::calcFeatureVec(bool reCalc) {
                         }
                 }
 
-            cerr << "Point " << i << ": " << point->r << " " << point->c << " " << point->orient << endl;
+            //cerr << "Point " << i << ": " << point->r << " " << point->c << " " << point->orient << endl;
         }
 
         for (int i=1; i<tower->size(); ++i)
@@ -366,8 +366,8 @@ void Image::featureMatch(Image *merit) {
 
         cerr << "MATCH " << "this " << p << " that " << i << " with v=" << minV << endl;
         if (minV <= 25.0) {
-            (this->pointSet)[p].matched = true;
-            (merit->pointSet)[i].matched = true;
+            (this->pointSet)[p].matched = i;
+            (merit->pointSet)[i].matched = p;
         }
     }
 }
