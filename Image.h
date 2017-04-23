@@ -15,6 +15,8 @@ using namespace std;
 #define I(i,j,h) ((i)*(h)+(j))
 
 #define EPS 1e-3
+#define REAL_EPS 1e-6
+#define PI 3.14159265358f
 
 class Image;
 
@@ -23,16 +25,17 @@ struct KeyPoint {
     int scale;
     double value;
     double orient;
-    bool matched;
+    int matched;
     double *feature;
-    KeyPoint(int rr, int cc): r(rr), c(cc), value(0.0f), matched(false), feature(NULL) { }
-    KeyPoint(): value(0.0f), matched(false), feature(NULL) { }
+    double *feature2;
+    KeyPoint(int rr, int cc): r(rr), c(cc), value(0.0f), matched(-1), feature(NULL), feature2(NULL) { }
+    KeyPoint(): value(0.0f), matched(-1), feature(NULL), feature2(NULL) { }
 };
 
 struct vec2 {
     double x, y;
     vec2(): x(0.0f), y(0.0f) { }
-    vec2(int _x, int _y): x(_x), y(_y) { }
+    vec2(double _x, double _y): x(_x), y(_y) { }
 };
 
 /**
@@ -79,6 +82,8 @@ public:
     ~Image();
 
     void calcKeyPoint(bool reCalc = 0);
+    void calcFeatureVec(bool reCalc = 0);
+    void featureMatch(Image *merit);
 
     int height, width;
     int *R, *G, *B;
@@ -90,6 +95,7 @@ public:
     const static int W;
     bool keypointAvailable;
     vector<KeyPoint> pointSet;
+    bool featureVecAvailble;
 
 private:
     static ImageEntry *head, *tail;
@@ -98,6 +104,7 @@ private:
 
     static vec2 getDelta(Image *img, int channel, int r, int c);
 
+    static double getAngle(vec2 vec);
 };
 
 #endif // IMAGE_H

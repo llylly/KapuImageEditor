@@ -20,6 +20,7 @@ public:
     static const QBrush matchBack, matchLine;
     static const QPen linePen;
     static const QPen matchLinePen;
+    static const QPen linkLinePen;
     static const int pointRadius;
 
     KImageView(QWidget *parent);

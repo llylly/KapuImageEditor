@@ -187,8 +187,8 @@ void Image::calcKeyPoint(bool reCalc) {
             double *arr = (*points)[k];
             double *parr = (*points)[k-1];
             double *narr = (*points)[k+1];
-            for (int i=1; i<now->height-1; ++i)
-                for (int j=1; j<now->width-1; ++j) {
+            for (int i=7; i<now->height-8; ++i)
+                for (int j=7; j<now->width-8; ++j) {
                     int pi = i << 1, pj = j << 1;
                     int ni = i >> 1, nj = j >> 1;
 
@@ -235,10 +235,140 @@ void Image::calcKeyPoint(bool reCalc) {
 
         for (int i=1; i<tower->size(); ++i)
             delete (*tower)[i];
+        delete tower;
         for (int i=0; i<points->size(); ++i)
             delete (*points)[i];
+        delete points;
 
         keypointAvailable = true;
+    }
+}
+
+void Image::calcFeatureVec(bool reCalc) {
+    if (this->height * this->width <= 0) return;
+    if (!keypointAvailable) return;
+    if ((reCalc) || (!featureVecAvailble)) {
+        vector<Image*> *tower = new vector<Image*>();
+        tower->push_back(this);
+        Image *p = this;
+        while ((p->height >= 2) && (p->width >= 2)) {
+            p = ImageEdit::bilinear(p, p->width >> 1, p->height >> 1);
+            tower->push_back(p);
+        }
+
+        for (int i=0; i < pointSet.size(); ++i) {
+            KeyPoint *point = &(pointSet[i]);
+
+            int tNo = 0, tmpInt = 1;
+            while (tmpInt < point->scale) tmpInt <<= 1, ++tNo;
+
+            int r = point->r / point->scale, c = point->c / point->scale;
+            Image *img = (*tower)[tNo];
+
+            double *direcs = new double[36];
+            memset(direcs, 0, sizeof(double) * 36);
+            for (int ii = -7; ii <= 8; ++ii)
+                for (int jj = -7; jj <= 8; ++jj) {
+                    vec2 t0 = getDelta(img, 0, r + ii, c + jj), t1 = getDelta(img, 1, r + ii, c + jj), t2 = getDelta(img, 2, r + ii, c + jj);
+                    double ang = getAngle(vec2(t0.x + t1.x + t2.x, t0.y + t1.y + t2.y));
+                    direcs[((int)(ang + 0.5f) / 10) % 36] += exp(-(double)(ii*ii + jj*jj) / (double)(2*8.0f));
+                }
+            int direc = 0, compdirec = -1; double tmp = 0.0f, tmp2 = 0.0f;
+            for (int ii = 0; ii < 36; ++ii)
+                if (direcs[ii] > tmp)
+                    tmp = direcs[ii], direc = ii*10;
+            for (int ii = 0; ii < 36; ++ii)
+                if ((ii != (direc / 10)) && (direcs[ii] > tmp2))
+                    tmp2 = direcs[ii], compdirec = ii;
+            if (tmp2 < 0.8f * tmp) compdirec = -1;
+            delete[] direcs;
+
+            point->orient = direc;
+
+            point->feature = new double[128];
+            memset(point->feature, 0, sizeof(double) * 128);
+            if (compdirec != -1) {
+                point->feature2 = new double[128];
+                memset(point->feature2, 0, sizeof(double) * 128);
+                //cerr << "compdirec" << endl;
+            }
+
+            for (int ii = 0; ii < 4; ++ii)
+                for (int jj = 0; jj < 4; ++jj) {
+                    for (int di = -7 + 4*ii; di < -3 + 4*ii; ++di)
+                        for (int dj = -7 + 4*jj; dj < -3 + 4*jj; ++dj) {
+                            vec2 t0 = getDelta(img, 0, r + di, c + dj), t1 = getDelta(img, 1, r + di, c + dj), t2 = getDelta(img, 2, r + di, c + dj);
+                            double ang = getAngle(vec2(t0.x + t1.x + t2.x, t0.y + t1.y + t2.y));
+                            double weigh = exp(-(double)(di*di + dj*dj) / (double)(2*8.0f));
+                            point->feature[((ii * 4 + jj) << 3) + (int)((ang - direc + 22.5f + 360.0f) / 45.0f) % 8] += weigh;
+                            if (compdirec != -1)
+                                point->feature2[((ii * 4 + jj) << 3) + (int)((ang - compdirec + 22.5f + 360.0f) / 45.0f) % 8] += weigh;
+                        }
+                }
+
+            //cerr << "Point " << i << ": " << point->r << " " << point->c << " " << point->orient << endl;
+        }
+
+        for (int i=1; i<tower->size(); ++i)
+            delete (*tower)[i];
+        delete tower;
+        featureVecAvailble = true;
+    }
+}
+
+void Image::featureMatch(Image *merit) {
+    if ((merit == NULL) || (merit->width * merit->height <= 0) || (!merit->featureVecAvailble))
+        return;
+    for (int i=0; i<merit->pointSet.size(); ++i) {
+        double minV = 1e+100; int p = -1;
+        double *here = ((merit->pointSet)[i]).feature;
+        for (int j=0; j<this->pointSet.size(); ++j) {
+            double *there = ((this->pointSet)[j]).feature;
+            double now;
+
+            now = 0.0f;
+            for (int k=0; k<128; ++k)
+                now += (there[k] - here[k]) * (there[k] - here[k]);
+            if (now < minV)
+                minV = now, p = j;
+            there = ((this->pointSet)[j]).feature2;
+            if (there != NULL) {
+                now = 0.0f;
+                for (int k=0; k<128; ++k)
+                    now += (there[k] - here[k]) * (there[k] - here[k]);
+                if (now < minV)
+                    minV = now, p = j;
+            }
+        }
+
+        if (((merit->pointSet)[i]).feature2 != NULL)
+            here = ((merit->pointSet)[i]).feature2;
+        if (here) {
+            for (int j=0; j<this->pointSet.size(); ++j) {
+                double *there = ((this->pointSet)[j]).feature;
+                double now;
+
+                now = 0.0f;
+                for (int k=0; k<128; ++k)
+                    now += (there[k] - here[k]) * (there[k] - here[k]);
+                if (now < minV)
+                    minV = now, p = j;
+                there = ((this->pointSet)[j]).feature2;
+                if (there != NULL) {
+                    now = 0.0f;
+                    for (int k=0; k<128; ++k)
+                        now += (there[k] - here[k]) * (there[k] - here[k]);
+                    if (now < minV)
+                        minV = now, p = j;
+                }
+            }
+        }
+
+        cerr << "MATCH " << "this " << p << " that " << i << " with v=" << minV << endl;
+        if (minV <= 25.0) {
+            (this->pointSet)[p].matched = i;
+            (merit->pointSet)[i].matched = p;
+        }
     }
 }
 
@@ -298,8 +428,16 @@ vec2 Image::getDelta(Image *img, int channel, int r, int c) {
     else if (c == (img->width - 1)) ans.y = arr[I(r, c, img->width)] - arr[I(r, c - 1, img->width)];
     else ans.y = (double)(arr[I(r, c+1, img->width)] - arr[I(r, c-1, img->width)]) / 2.0f;
 
-    ans.x /= 255.0f, ans.y /= 255.0f;
     return ans;
+}
+
+double Image::getAngle(vec2 vec) {
+    if (abs(vec.x) < REAL_EPS)
+        if (vec.y >= 0) return 90.0f; else return 270.0f;
+    double ang = atan2(vec.y, vec.x);
+    if (ang < 0) ang = 2 * PI +ang;
+    ang = ang / PI * 180;
+    return ang;
 }
 
 Image::Image()
@@ -310,6 +448,7 @@ Image::Image()
     histogramAvailable = false;
     pointSet.clear();
     keypointAvailable = false;
+    featureVecAvailble = false;
 }
 
 Image::~Image() {
